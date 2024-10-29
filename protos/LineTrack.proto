@@ -1,0 +1,49 @@
+#VRML_SIM R2023b utf8
+
+PROTO LineTrack [
+  field SFVec3f    translation  0 0 0
+  field SFRotation rotation     0 1 0 0
+  field SFVec3f    scale        0.0075 0.0075 0.0075
+  field SFString   name         "default_name"
+  field SFColor    color        0.16862746 0.18039216 0.19215687  # Default color
+]
+{
+  Transform {
+    translation IS translation
+    rotation IS rotation
+    scale IS scale
+    name IS name
+    children [
+      Solid {
+        name "obj_1"
+      }
+      Solid {
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor IS color
+              roughness 1
+              metalness 0
+              name "color_2829873"
+            }
+            geometry IndexedFaceSet {
+              coord Coordinate {
+                point [
+                  0 0 0,   # Point 0
+                  1 0 0,   # Point 1
+                  1 1 0,   # Point 2
+                  0 1 0    # Point 3
+                ]
+              }
+              coordIndex [
+                0, 1, 2, 3, 0, -1  # Rectangle from Point 0 to Point 3
+              ]
+            }
+          }
+        ]
+        name "group_1_2829873"
+      }
+      
+    ]
+  }
+}

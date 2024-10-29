@@ -1,0 +1,114 @@
+#VRML_SIM R2023b utf8
+
+PROTO Waiter [
+  field SFVec3f    translation  0 0 0.045
+  field SFRotation rotation     0 1 0 0
+  field SFVec3f    scale        1 1 1
+  field SFString   name         "default_name"
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    scale IS scale
+    name IS name
+    children [
+      Solid {
+        translation 0.015 -0.045 0.03
+        children [
+          DEF eye Shape {
+            appearance PBRAppearance {
+              baseColor 1 0 0
+              roughness 1
+              metalness 0
+            }
+            geometry Box {
+              size 0.005 0.005 0.005
+            }
+          }
+        ]
+        name "solid(2)"
+      }
+      Solid {
+        translation -0.015 -0.045 0.03
+        children [
+          USE eye
+        ]
+        name "solid(3)"
+      }
+      DEF Body Shape {
+        appearance PBRAppearance {
+          baseColor 0 0 1
+          roughness 1
+          metalness 0
+        }
+        geometry Cylinder {
+          height 1.4
+          radius 0.2
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          position 21.08306840647833
+          anchor 0.045 0 -0.0155
+        }
+        device [
+          RotationalMotor {
+            name "motor_1"
+          }
+          PositionSensor {
+            name "ps_1"
+          }
+        ]
+        endPoint Solid {
+          translation 0.045 0 -0.0155
+          rotation 7.853589927914979e-17 1 -3.1414359711659916e-16 1.57
+          children [
+            DEF Wheel Shape {
+              appearance PBRAppearance {
+                baseColor 1 0 0
+                roughness 1
+                metalness 0
+              }
+              geometry Cylinder {
+                height 0.01
+                radius 0.025
+              }
+            }
+          ]
+          boundingObject USE Wheel
+          physics DEF wheel_physics Physics {
+          }
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          position 21.0830681442858
+          anchor -0.045 0 -0.0155
+        }
+        device [
+          RotationalMotor {
+            name "motor_2"
+          }
+          PositionSensor {
+            name "ps_2"
+          }
+        ]
+        endPoint Solid {
+          translation -0.045 0 -0.0155
+          rotation 0 1 0 1.57
+          children [
+            USE Wheel
+          ]
+          name "solid(1)"
+          boundingObject USE Wheel
+          physics USE wheel_physics
+        }
+      }
+    ]
+    boundingObject USE Body
+    physics Physics {
+    }
+    controller "odometer_calculation"
+  }
+}
