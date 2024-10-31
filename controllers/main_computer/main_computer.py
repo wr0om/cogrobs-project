@@ -15,7 +15,7 @@ import math
 import ast
 
 graph = get_graph()
-entities_channels = [WAITER_CHANNEL]
+entities_channels = [DRONE_CHANNEL]
 
 got_nodes_position = False
 sent_possitions_to_entities = False
@@ -95,5 +95,6 @@ if __name__ == "__main__":
     # create the Robot instance.
     robot = Robot()
     run_robot(robot)
+    
 
     

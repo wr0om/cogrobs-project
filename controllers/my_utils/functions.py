@@ -1,11 +1,13 @@
 
 from classes_and_constans import RED, GREEN, BLUE, ORANGE, NOCOLOR, WAITER_CHANNEL, CLEANER_CHANNEL, DRONE_CHANNEL, NODES_CHANNEL
-from classes_and_constans import CPU_CHANNEL
+from classes_and_constans import CPU_CHANNEL, NODES_CHANNEL, WAITER_CHANNEL, CLEANER_CHANNEL, DRONE_CHANNEL
 from classes_and_constans import Location, Edge, GraphNode, Entity, Graph
 from classes_and_constans import get_graph
 
 import math
 import ast
+
+channels_to_str = {CPU_CHANNEL: "CPU", NODES_CHANNEL: "NODES", WAITER_CHANNEL: "WAITER", CLEANER_CHANNEL: "CLEANER", DRONE_CHANNEL: "DRONE"}
 
 def get_positions_graph_from_cpu(receiver, emitter, graph, got_positions = False):
     nodes = graph.get_nodes()
@@ -18,7 +20,7 @@ def get_positions_graph_from_cpu(receiver, emitter, graph, got_positions = False
                 data = ast.literal_eval(message)  # Safely parse the string back into a tuple
                 name, position = data
                 graph.set_node_position(name, position)
-                print(f"Waiter Received position {name}: {position} from CPU")
+                print(f"{channels_to_str[receiver.getChannel()]} Received position {name}: {position} from CPU")
                 receiver.nextPacket()
     
     print(non_null_count, len_nodes)

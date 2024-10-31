@@ -331,7 +331,8 @@ def run_robot(robot):
 
 if __name__ == "__main__":
     # create the Robot instance.
-    robot = Robot()
-    run_robot(robot)
+    # robot = Robot()
+    # run_robot(robot)
+    pass
 
     
