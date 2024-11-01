@@ -15,18 +15,19 @@
 
 import sys
 import os
-libraries_path = os.path.abspath('../my_utils')
-sys.path.append(libraries_path)
-
-from classes_and_constans import RED, GREEN, BLUE, ORANGE, NOCOLOR, DRONE_CHANNEL, CPU_CHANNEL
-from classes_and_constans import Location, Edge, GraphNode, Entity, Graph
-from classes_and_constans import get_graph
-from functions import get_positions_graph_from_cpu
-
-from controller import Robot, Motor, InertialUnit, GPS, Gyro, Keyboard, Camera, DistanceSensor
 import numpy as np
 from math import cos, sin
 import sys
+import time
+libraries_path = os.path.abspath('../my_utils')
+sys.path.append(libraries_path)
+
+from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL
+from classes_and_constants import Location, Edge, GraphNode, Entity, Graph
+from classes_and_constants import get_graph
+from functions import *
+from controller import Robot, Motor, InertialUnit, GPS, Gyro, Keyboard, Camera, DistanceSensor, Supervisor
+
 sys.path.append('../../../../controllers_shared/python_based')
 from pid_controller import pid_velocity_fixed_height_controller
 
@@ -35,12 +36,14 @@ MAX_FORWARD_SPEED = 0.5
 MAX_SIDEWAY_SPEED = 0.5
 MAX_YAW_RATE = 1
 MAX_ALTITUDE = 2.5
-SPEEDING_UNIT = 0.005
+SPEEDING_UNIT = 0.0005#0.005
 
-graph = get_graph()
-got_positions_from_cpu = False
-on_node = True
-on_track = False
+EPSILON = 0.5
+
+# graph = get_graph()
+# got_positions_from_cpu = False
+# on_node = True
+# on_track = False
 
 def run_robot(robot):
     timestep = int(robot.getBasicTimeStep())
@@ -100,28 +103,28 @@ def run_robot(robot):
     emitter = robot.getDevice("emitter")
     emitter.setChannel(DRONE_CHANNEL)
 
-    def go_to_goal(x, y, z):
+    def go_to_goal(x, y, z, start_flag=False):
         print(f'going to {x}, {y}, {z}')
         nonlocal x_goal, y_goal, altitude_goal
         x_goal = x
         y_goal = y
         altitude_goal = z
-        execute_configuration(x_goal, y_goal, altitude_goal)
+        execute_configuration(x_goal, y_goal, altitude_goal, start_flag)
         print(f'goal reached {x}, {y}, {z}')
     
-    def stay_in_position():
+    def stay_in_position(start_flag=False):
         nonlocal x_goal, y_goal, altitude_goal
-        print(f'staying in position {x_goal}, {y_goal}, {altitude_goal}')
+        #print(f'staying in position {x_goal}, {y_goal}, {altitude_goal}')
         x_goal = gps.getValues()[0]
         y_goal = gps.getValues()[1]
         altitude_goal = gps.getValues()[2]
         starting_time = robot.getTime()
-        while robot.getTime() - starting_time < 5:
-            execute_configuration(x_goal, y_goal, altitude_goal)
+        while robot.getTime() - starting_time < 0.5:
+            execute_configuration(x_goal, y_goal, altitude_goal, start_flag)
+        execute_configuration(x_goal, y_goal, altitude_goal, start_flag)
+        #print('finished staying in position')
 
-        print('finnished staying in position')
-
-    def execute_configuration(x_goal, y_goal, altitude_goal):
+    def execute_configuration(x_goal, y_goal, altitude_goal, start_flag=False):
 
         nonlocal past_time, past_x_global, past_y_global, height_desired, x_global, y_global
 
@@ -145,6 +148,12 @@ def run_robot(robot):
             x_global = gps.getValues()[0]
             y_global = gps.getValues()[1]
 
+            if not start_flag:
+                # send the current location to the cpu
+                current_location = gps.getValues()
+                message = (robot_name, current_location)
+                send_msg_to_cpu(emitter, message)
+
             # Calculate global velocities
             v_x_global = (x_global - past_x_global) / dt
             v_y_global = (y_global - past_y_global) / dt
@@ -165,26 +174,29 @@ def run_robot(robot):
 
             distance = np.linalg.norm(initial_state["pos"] - desired_state["pos"])
 
+            if distance < EPSILON:
+                reached_goal = True
+                
             
             forward_distance = desired_state["pos"][0] - initial_state["pos"][0]
             sideways_distance = desired_state["pos"][1] - initial_state["pos"][1]
 
-            print("forward_distance: ", forward_distance , "sideways_distance: ", sideways_distance)
+            # print("forward_distance: ", forward_distance , "sideways_distance: ", sideways_distance)
             
 
-            print(f"Current position: {initial_state['pos']}")
-            print(f"Desired position: {desired_state['pos']}")
-            # print(f"Current velocity: {initial_state['moment']}")
-            # print(f"Desired velocity: {desired_state['moment']}")
-            # print("\n")
-            # print(f"deseired_direction: {desired_direction}")
-            print(f"distance: {distance}")
+            # print(f"Current position: {initial_state['pos']}")
+            # print(f"Desired position: {desired_state['pos']}")
+            # # print(f"Current velocity: {initial_state['moment']}")
+            # # print(f"Desired velocity: {desired_state['moment']}")
+            # # print("\n")
+            # # print(f"deseired_direction: {desired_direction}")
+            # print(f"distance: {distance}")
 
             slowing_forward = False
             slowing_sideways = False
 
             if np.linalg.norm(initial_state["pos"] - desired_state["pos"]) > 0.1:
-                print("moving")
+                #print("moving")
                 if not slowing_forward:
                     if forward_distance > SPEEDING_UNIT and forward_desired < MAX_FORWARD_SPEED:
                         forward_desired += SPEEDING_UNIT
@@ -213,14 +225,14 @@ def run_robot(robot):
                 if np.linalg.norm(initial_state["pos"][0] - desired_state["pos"][0]) < 0.3 and np.abs(forward_desired) > 10*SPEEDING_UNIT:
                     forward_desired -= np.sign(forward_desired)*SPEEDING_UNIT
                     slowing_forward = True
-                    print("slowing forward")
+                    #print("slowing forward")
                 
                 if np.linalg.norm(initial_state["pos"][1] - desired_state["pos"][1]) < 0.3 and np.abs(sideways_desired) > 10*SPEEDING_UNIT:
                     slowing_sideways = True
                     sideways_desired -= np.sign(sideways_desired)*SPEEDING_UNIT
         
             else:
-                print("slowing down")
+                #print("slowing down")
                 if np.abs(forward_desired) > SPEEDING_UNIT:
                     forward_desired -= np.sign(forward_desired)*SPEEDING_UNIT
                 else:
@@ -250,7 +262,7 @@ def run_robot(robot):
 
             height_desired += height_diff_desired * dt
 
-            print(f"forward_desired: {forward_desired}, sideways_desired: {sideways_desired}, yaw_desired: {yaw_desired}, height_desired: {height_desired}")
+            #print(f"forward_desired: {forward_desired}, sideways_desired: {sideways_desired}, yaw_desired: {yaw_desired}, height_desired: {height_desired}")
 
             ## Example how to get sensor data
             ## range_front_value = range_front.getValue()
@@ -278,43 +290,128 @@ def run_robot(robot):
     def go_to(node_name):
         node = graph.get_node(node_name)
         go_to_goal(node.fisical_position[0], node.fisical_position[1], MAX_ALTITUDE)
+
+    def get_enemy_drones_positions(enemy_drone_names, enemy_drone_robots):
+        """
+        Get the positions of enemy drones in the environment.
+
+        Parameters:
+        enemy_drone_names: List of names of enemy drones.
+        enemy_drone_robots: List of robot objects representing enemy drones.
+
+        Returns:
+        A list of tuples containing the positions of enemy drones.
+        """
+        enemy_drone_positions = dict()
+        for enemy_name, enemy_robot in zip(enemy_drone_names, enemy_drone_robots):
+            enemy_position = enemy_robot.getField("translation").getSFVec3f()
+            enemy_drone_positions[enemy_name] = enemy_position
+        return enemy_drone_positions
+    
+    def lose_control():
+        m1_motor.setVelocity(0)
+        m2_motor.setVelocity(0)
+        m3_motor.setVelocity(0)
+        m4_motor.setVelocity(0)
     
     global got_positions_from_cpu
+    altitude_goal = -1
 
-    #  get positions from cpu
-    while robot.step(timestep) != -1 and not got_positions_from_cpu:
-        # Check for incoming packets
-        print(f"Queue length: {receiver.getQueueLength()}")
-        got_positions_from_cpu = get_positions_graph_from_cpu(receiver, emitter, graph, got_positions_from_cpu)
+    robot_name = robot.getName()
+    print(f"Robot name: {robot_name}")
 
-        if got_positions_from_cpu:
-            print("Got positions from CPU")
-            got_positions_from_cpu = True
 
-    # lifiting off
+    # set the channel to communicate with the cpu
+    if robot_name == "Drone":
+        drone_channel = DRONE_CHANNEL
+        altitude_goal = MAX_ALTITUDE # Set your target altitude
+    else:
+        drone_channel = ENEMY_DRONE_CHANNEL
+        supervisor = Supervisor()
+        # get the drone robot
+        drone_robot = supervisor.getFromDef("Drone")
+
+        if "1" in robot_name:
+            altitude_goal = 1
+        elif "2" in robot_name:
+            altitude_goal = 2
+        elif "3" in robot_name:
+            altitude_goal = 3
+        elif "4" in robot_name:
+            altitude_goal = 4
+
+
+    receiver.setChannel(drone_channel)
+
+
+    # lifting off
     while robot.step(timestep) != -1 and gps.getValues()[2] is None:
         pass
 
-    height_desired = gps.getValues()[2]
-    x_goal = gps.getValues()[0]
-    y_goal = gps.getValues()[1]
-    altitude_goal = MAX_ALTITUDE # Set your target altitude
+    current_location = gps.getValues()
+    x_goal = current_location[0]
+    y_goal = current_location[1]
+    height_desired = current_location[2]
+    start_flag = True
+    go_to_goal(x_goal, y_goal, altitude_goal, start_flag)
+    start_flag = False
+    print('finished lifting off')
 
-    go_to_goal(x_goal, y_goal, altitude_goal)
+    # send the current location to the cpu
+    current_location = gps.getValues()
+    message = (robot_name, current_location)
+    print(f"Sending msg to CPU: {message}")
+    send_msg_to_cpu(emitter, message)
 
-    print('finnished lifiting off')
-
-    go_to('tl_1')
-    go_to('tl_2')
-    go_to('ml_2')
-    go_to('ml')
-    go_to('ml_1')
-    go_to('k')
-
+    
+    last_time = time.time()
+    TIME_TO_SEND = 0.5
     while robot.step(timestep) != -1:
-        stay_in_position()
+        current_location = gps.getValues()
+        current_time = time.time()
+        # Send the current location to the cpu every 1 seconds
+        if current_time - last_time > TIME_TO_SEND:
+            message = (robot_name, current_location)
+            send_msg_to_cpu(emitter, message)
+            last_time = current_time
 
-    robot.cleanup()
+        if robot_name != "Drone":
+            # Check if Drone is about to crash into you
+            drone_position = get_enemy_drones_positions(["Drone"], [drone_robot])["Drone"]
+            distance_from_drone = np.linalg.norm(np.array(drone_position) - np.array(current_location))
+            if distance_from_drone < EPSILON:
+                print(f"Drone is about to crash into {robot_name}")
+                # enemy drone loses control
+                lose_control()
+                break
+
+
+
+        # Check for incoming packets
+        if receiver.getQueueLength() > 0:
+            messages = get_msg_from_cpu(receiver)
+            print(f"Messages {robot_name} got: {messages}")
+            # get last message sent by the CPU, reverse the list to get the last message first
+            messages.reverse()
+            for message in messages:
+                if message[0] == "CPU":
+                    print(f"Received message from CPU: {message}")
+                    # get the goal location from the CPU
+                    x_goal, y_goal, altitude_goal = message[1]
+                    distance = np.linalg.norm(np.array([x_goal, y_goal, altitude_goal]) - np.array(current_location))
+                    # only go to the new goal location if the distance is greater than EPSILON
+                    if distance > EPSILON:
+                        print(f"{robot_name} received goal location: {x_goal}, {y_goal}, {altitude_goal}")
+                        go_to_goal(x_goal, y_goal, altitude_goal, start_flag)
+        else:
+            stay_in_position(start_flag)
+
+
+    # while robot.step(timestep) != -1:
+    #     stay_in_position()
+
+    # robot.cleanup()
+
 
 if __name__ == '__main__':
     robot = Robot()

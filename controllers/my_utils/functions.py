@@ -1,13 +1,12 @@
 
-from classes_and_constans import RED, GREEN, BLUE, ORANGE, NOCOLOR, WAITER_CHANNEL, CLEANER_CHANNEL, DRONE_CHANNEL, NODES_CHANNEL
-from classes_and_constans import CPU_CHANNEL, NODES_CHANNEL, WAITER_CHANNEL, CLEANER_CHANNEL, DRONE_CHANNEL
-from classes_and_constans import Location, Edge, GraphNode, Entity, Graph
-from classes_and_constans import get_graph
+from classes_and_constants import CPU_CHANNEL, DRONE_CHANNEL
+from classes_and_constants import Location, Edge, GraphNode, Entity, Graph
+from classes_and_constants import get_graph
 
 import math
 import ast
 
-channels_to_str = {CPU_CHANNEL: "CPU", NODES_CHANNEL: "NODES", WAITER_CHANNEL: "WAITER", CLEANER_CHANNEL: "CLEANER", DRONE_CHANNEL: "DRONE"}
+channels_to_str = {CPU_CHANNEL: "CPU", DRONE_CHANNEL: "DRONE"}
 
 def get_positions_graph_from_cpu(receiver, emitter, graph, got_positions = False):
     nodes = graph.get_nodes()
@@ -35,3 +34,28 @@ def get_positions_graph_from_cpu(receiver, emitter, graph, got_positions = False
         got_positions = False
     
     return got_positions
+
+def send_msg_to_cpu(emitter, msg):
+    emitter.setChannel(CPU_CHANNEL)
+    emitter.send(str(msg).encode('utf-8'))
+    #print(f"Sent position to CPU: {msg}")
+
+def get_msg_from_cpu(receiver):
+    messages = []
+    while receiver.getQueueLength() > 0:
+        message = receiver.getString()
+        if message not in [None, ""]:
+            message = ast.literal_eval(message)
+            print(f"Received message from CPU: {message}")
+            messages.append(message)
+        receiver.nextPacket()
+
+    return messages
+
+def coords_to_string(coords):
+    return f"{coords[0]},{coords[1]},{coords[2]}"
+
+def send_msg_to_drone(emitter, msg):
+    emitter.setChannel(DRONE_CHANNEL)
+    emitter.send(str(msg).encode('utf-8'))
+    print(f"Sent message to Drone: {msg}")
