@@ -59,3 +59,20 @@ def send_msg_to_drone(emitter, msg):
     emitter.setChannel(DRONE_CHANNEL)
     emitter.send(str(msg).encode('utf-8'))
     print(f"Sent message to Drone: {msg}")
+
+def get_enemy_drones_positions(enemy_drone_names, enemy_drone_robots):
+    """
+    Get the positions of enemy drones in the environment.
+
+    Parameters:
+    enemy_drone_names: List of names of enemy drones.
+    enemy_drone_robots: List of robot objects representing enemy drones.
+
+    Returns:
+    A list of tuples containing the positions of enemy drones.
+    """
+    enemy_drone_positions = dict()
+    for enemy_name, enemy_robot in zip(enemy_drone_names, enemy_drone_robots):
+        enemy_position = enemy_robot.getField("translation").getSFVec3f()
+        enemy_drone_positions[enemy_name] = enemy_position
+    return enemy_drone_positions

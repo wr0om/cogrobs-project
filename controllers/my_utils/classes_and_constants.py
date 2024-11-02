@@ -12,9 +12,8 @@ CPU_CHANNEL = 0
 DRONE_CHANNEL = 1
 ENEMY_DRONE_CHANNEL = 2
 
-# NODES_CHANNEL = 2
-# WAITER_CHANNEL = 3
-# CLEANER_CHANNEL = 4
+EPSILON = 0.5
+
 
 class Location:
     @abstractmethod

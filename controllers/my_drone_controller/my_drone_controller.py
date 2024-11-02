@@ -22,7 +22,7 @@ import time
 libraries_path = os.path.abspath('../my_utils')
 sys.path.append(libraries_path)
 
-from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL
+from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON
 from functions import *
 from controller import Robot, Keyboard, Supervisor
 
@@ -34,9 +34,8 @@ MAX_FORWARD_SPEED = 0.5
 MAX_SIDEWAY_SPEED = 0.5
 MAX_YAW_RATE = 1
 MAX_ALTITUDE = 2.5
-SPEEDING_UNIT = 0.0005#0.005
+SPEEDING_UNIT = 0.005#0.005
 
-EPSILON = 0.5
 
 
 
@@ -95,19 +94,21 @@ def run_robot(robot):
     receiver = robot.getDevice("receiver")
     receiver.enable(timestep)
 
-    emitter = robot.getDevice("emitter")
-    emitter.setChannel(CPU_CHANNEL)
+    # emitter = robot.getDevice("emitter")
+    # emitter.setChannel(CPU_CHANNEL)
 
-    def go_to_goal(x, y, z, start_flag=False):
+    def go_to_goal(x, y, z):
         print(f'going to {x}, {y}, {z}')
         nonlocal x_goal, y_goal, altitude_goal
         x_goal = x
         y_goal = y
         altitude_goal = z
-        execute_configuration(x_goal, y_goal, altitude_goal, start_flag)
+        execute_configuration(x_goal, y_goal, altitude_goal)
         print(f'goal reached {x}, {y}, {z}')
     
-    def stay_in_position(start_flag=False):
+    def stay_in_position(robot_name):
+        # if robot_name == "Drone":
+        #     print('staying in position')
         nonlocal x_goal, y_goal, altitude_goal
         #print(f'staying in position {x_goal}, {y_goal}, {altitude_goal}')
         x_goal = gps.getValues()[0]
@@ -115,11 +116,12 @@ def run_robot(robot):
         altitude_goal = gps.getValues()[2]
         starting_time = robot.getTime()
         while robot.getTime() - starting_time < 0.2:
-            execute_configuration(x_goal, y_goal, altitude_goal, start_flag)
-        execute_configuration(x_goal, y_goal, altitude_goal, start_flag)
+            execute_configuration(x_goal, y_goal, altitude_goal)
+        execute_configuration(x_goal, y_goal, altitude_goal)
         #print('finished staying in position')
 
-    def execute_configuration(x_goal, y_goal, altitude_goal, start_flag=False):
+    def execute_configuration(x_goal, y_goal, altitude_goal):
+
         nonlocal past_time, past_x_global, past_y_global, height_desired, x_global, y_global
 
         # Main loop executing the commands:
@@ -142,12 +144,6 @@ def run_robot(robot):
             x_global = gps.getValues()[0]
             y_global = gps.getValues()[1]
 
-            if not start_flag:
-                # send the current location to the cpu
-                current_location = gps.getValues()
-                message = (robot_name, current_location)
-                send_msg_to_cpu(emitter, message)
-
             # Calculate global velocities
             v_x_global = (x_global - past_x_global) / dt
             v_y_global = (y_global - past_y_global) / dt
@@ -168,13 +164,13 @@ def run_robot(robot):
 
             distance = np.linalg.norm(initial_state["pos"] - desired_state["pos"])
 
-            if distance < EPSILON:
-                reached_goal = True
-                
+            
             forward_distance = desired_state["pos"][0] - initial_state["pos"][0]
             sideways_distance = desired_state["pos"][1] - initial_state["pos"][1]
 
             # print("forward_distance: ", forward_distance , "sideways_distance: ", sideways_distance)
+            
+
             # print(f"Current position: {initial_state['pos']}")
             # print(f"Desired position: {desired_state['pos']}")
             # # print(f"Current velocity: {initial_state['moment']}")
@@ -277,23 +273,6 @@ def run_robot(robot):
 
             if reached_goal:
                 return
-
-    def get_enemy_drones_positions(enemy_drone_names, enemy_drone_robots):
-        """
-        Get the positions of enemy drones in the environment.
-
-        Parameters:
-        enemy_drone_names: List of names of enemy drones.
-        enemy_drone_robots: List of robot objects representing enemy drones.
-
-        Returns:
-        A list of tuples containing the positions of enemy drones.
-        """
-        enemy_drone_positions = dict()
-        for enemy_name, enemy_robot in zip(enemy_drone_names, enemy_drone_robots):
-            enemy_position = enemy_robot.getField("translation").getSFVec3f()
-            enemy_drone_positions[enemy_name] = enemy_position
-        return enemy_drone_positions
     
     def lose_control():
         m1_motor.setVelocity(0)
@@ -316,19 +295,10 @@ def run_robot(robot):
         supervisor = Supervisor()
         # get the drone robot
         drone_robot = supervisor.getFromDef("Drone")
-
-        if "1" in robot_name:
-            altitude_goal = 1
-        elif "2" in robot_name:
-            altitude_goal = 2
-        elif "3" in robot_name:
-            altitude_goal = 3
-        elif "4" in robot_name:
-            altitude_goal = 4
-
+        robot_num = int(robot_name[-1])
+        altitude_goal = robot_num
 
     receiver.setChannel(drone_channel)
-
 
     # lifting off
     while robot.step(timestep) != -1 and gps.getValues()[2] is None:
@@ -338,28 +308,15 @@ def run_robot(robot):
     x_goal = current_location[0]
     y_goal = current_location[1]
     height_desired = current_location[2]
-    start_flag = True
-    go_to_goal(x_goal, y_goal, altitude_goal, start_flag)
-    start_flag = False
+    go_to_goal(x_goal, y_goal, altitude_goal)
     print('finished lifting off')
-
-    # send the current location to the cpu
-    current_location = gps.getValues()
-    message = (robot_name, current_location)
-    print(f"Sending msg to CPU: {message}")
-    send_msg_to_cpu(emitter, message)
-
+    plan_coords = None
     
     last_time = time.time()
     TIME_TO_SEND = 0.5
     while robot.step(timestep) != -1:
         current_location = gps.getValues()
         current_time = time.time()
-        # Send the current location to the cpu every 1 seconds
-        if current_time - last_time > TIME_TO_SEND:
-            message = (robot_name, current_location)
-            send_msg_to_cpu(emitter, message)
-            last_time = current_time
 
         if robot_name != "Drone":
             # Check if Drone is about to crash into you
@@ -367,10 +324,6 @@ def run_robot(robot):
             distance_from_drone = np.linalg.norm(np.array(drone_position) - np.array(current_location))
             if distance_from_drone < EPSILON:
                 print(f"Drone is about to crash into {robot_name}")
-                # send message to CPU
-                message = (robot_name, "CRASH")
-                send_msg_to_cpu(emitter, message)
-                print(f"{robot_name} sent crash message to CPU")
                 # enemy drone loses control
                 lose_control()
                 break
@@ -384,15 +337,24 @@ def run_robot(robot):
             for message in messages:
                 if message[0] == "CPU":
                     print(f"Received message from CPU: {message}")
+                    plan_coords = message[1]
                     # get the goal location from the CPU
-                    x_goal, y_goal, altitude_goal = message[1]
+                    x_goal, y_goal, altitude_goal = plan_coords.pop(0)
                     distance = np.linalg.norm(np.array([x_goal, y_goal, altitude_goal]) - np.array(current_location))
                     # only go to the new goal location if the distance is greater than EPSILON
                     if distance > EPSILON:
                         print(f"{robot_name} received goal location: {x_goal}, {y_goal}, {altitude_goal}")
-                        go_to_goal(x_goal, y_goal, altitude_goal, start_flag)
+                        go_to_goal(x_goal, y_goal, altitude_goal)
+        elif plan_coords and len(plan_coords) > 0 and \
+              np.linalg.norm(np.array([x_goal, y_goal, altitude_goal]) - np.array(current_location)) < EPSILON:
+            # get the next goal location from the plan_coords
+            x_goal, y_goal, altitude_goal = plan_coords.pop(0)
+            if distance > EPSILON:
+                print(f"{robot_name} continuing to next goal location: {x_goal}, {y_goal}, {altitude_goal}")
+                go_to_goal(x_goal, y_goal, altitude_goal)
         else:
-            stay_in_position(start_flag)
+            stay_in_position(robot_name)
+            #go_to_goal(x_goal, y_goal, altitude_goal)
 
 
 if __name__ == '__main__':

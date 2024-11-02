@@ -89,12 +89,15 @@ class DronePathFinder:
                 total_cost += self.mac[a.action]._content.payload
         return total_cost
     
-    def get_next_coords(self):
+    def get_plan_coords(self):
         if self.plan:
             actions = self.plan.actions
-            input_str = str(actions[0])
-            goal_x, goal_y, goal_z = [float(coord) for coord in input_str.split('->')[1].strip()[1:-1].split(',')]
-            return goal_x, goal_y, goal_z
+            plan_coords = []
+            for action in actions:
+                input_str = str(action)
+                goal_x, goal_y, goal_z = [float(coord) for coord in input_str.split('->')[1].strip()[1:-1].split(',')]
+                plan_coords.append((goal_x, goal_y, goal_z))
+            return plan_coords
         return None
 
 

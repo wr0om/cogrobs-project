@@ -8,8 +8,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.09442476532156938 0.0953737658859582 -0.9909529799514692 1.5698843531004552
-  position -0.0691647893701114 3.4630054175004705 0.7378741068329834
+  orientation 0.19939588667473918 0.20139988221919936 -0.9589991490190632 1.6026558604880672
+  position -0.06147011215135499 8.927271896907497 3.757606435154743
   follow "Drone"
 }
 TexturedBackground {
@@ -42,7 +42,7 @@ Wall {
   size 0.2 20 2.4
 }
 Robot {
-  translation -8.91 -7.63 0.49
+  translation -7.83 -7.63 0.49
   children [
     Emitter {
       translation 0.2 0.5 0.7
@@ -103,6 +103,7 @@ Robot {
   ]
   name "main_computer"
   controller "main_computer"
+  supervisor TRUE
 }
 DEF Drone Robot {
   translation 0 0 0.01
