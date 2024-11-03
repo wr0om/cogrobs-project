@@ -103,7 +103,7 @@ def run_robot(robot):
                 robot_names.remove(drone)
 
         # replan only after removing a drone and 5 seconds have passed
-        if current_time - last_replanner > 5 or len(last_drone_positions) != len(drones_positions):
+        if current_time - last_replanner > 3 or len(last_drone_positions) != len(drones_positions):
             current_plan, plan_coords = replan_path(drones_positions, emitter)
             last_replanner = current_time
             last_drone_positions = drones_positions
