@@ -89,11 +89,25 @@ def run_robot(robot):
     current_plan = None
     goal_location = None
 
+    # for metrics
+    start_time = time.time()
+    last_drone_location = drones_positions["Drone"]
+    total_drone_distance = 0
+    total_drone_time = 0
+
     while robot.step(timestep) != -1:
+        
         current_time = time.time()
         drones_positions = get_enemy_drones_positions(robot_names, drone_robots)
+
+        # for metrics
+        total_drone_distance += np.linalg.norm(np.array(drones_positions["Drone"]) - np.array(last_drone_location))
+        last_drone_location = drones_positions["Drone"]
+        
         distances_from_drone = {drone: np.linalg.norm(np.array(drones_positions["Drone"]) - np.array(position))\
                                  for drone, position in drones_positions.items() if drone != "Drone"}
+        
+
         for drone, distance in distances_from_drone.items():
             if distance < EPSILON:
                 print(f"Drone is close to {drone}, REMOVING FROM CPU")
@@ -102,7 +116,16 @@ def run_robot(robot):
                 drone_robots.pop(robot_names.index(drone))
                 robot_names.remove(drone)
 
-        # replan only after removing a drone and 5 seconds have passed
+                if len(drones_positions) == 1:
+                    print("All drones are removed, STOPPING")
+                    end_time = time.time()
+                    total_drone_time = end_time - start_time
+                    print(f"Total Time: {total_drone_time}")
+                    print(f"Total Distance Traveled: {total_drone_distance}")
+                    robot.step(-1)
+                    break
+
+        # replan only after removing a drone and 3 seconds have passed
         if current_time - last_replanner > 3 or len(last_drone_positions) != len(drones_positions):
             current_plan, plan_coords = replan_path(drones_positions, emitter)
             last_replanner = current_time

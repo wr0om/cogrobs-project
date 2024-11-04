@@ -37,6 +37,9 @@ MAX_ALTITUDE = 2.5
 SPEEDING_UNIT = 0.005#0.005
 
 
+# for metrics
+previous_location = None
+total_distance_traveled = 0
 
 
 def run_robot(robot):
@@ -97,16 +100,16 @@ def run_robot(robot):
     # emitter = robot.getDevice("emitter")
     # emitter.setChannel(CPU_CHANNEL)
 
-    def go_to_goal(x, y, z):
+    def go_to_goal(x, y, z, flag_lifting_off):
         print(f'going to {x}, {y}, {z}')
         nonlocal x_goal, y_goal, altitude_goal
         x_goal = x
         y_goal = y
         altitude_goal = z
-        execute_configuration(x_goal, y_goal, altitude_goal)
+        execute_configuration(x_goal, y_goal, altitude_goal, flag_lifting_off)
         print(f'goal reached {x}, {y}, {z}')
     
-    def stay_in_position(robot_name):
+    def stay_in_position(robot_name, flag_lifting_off):
         # if robot_name == "Drone":
         #     print('staying in position')
         nonlocal x_goal, y_goal, altitude_goal
@@ -116,11 +119,11 @@ def run_robot(robot):
         altitude_goal = gps.getValues()[2]
         starting_time = robot.getTime()
         while robot.getTime() - starting_time < 0.2:
-            execute_configuration(x_goal, y_goal, altitude_goal)
-        execute_configuration(x_goal, y_goal, altitude_goal)
+            execute_configuration(x_goal, y_goal, altitude_goal, flag_lifting_off)
+        execute_configuration(x_goal, y_goal, altitude_goal, flag_lifting_off)
         #print('finished staying in position')
 
-    def execute_configuration(x_goal, y_goal, altitude_goal):
+    def execute_configuration(x_goal, y_goal, altitude_goal, flag_lifting_off):
 
         nonlocal past_time, past_x_global, past_y_global, height_desired, x_global, y_global
 
@@ -143,6 +146,13 @@ def run_robot(robot):
             altitude = gps.getValues()[2]
             x_global = gps.getValues()[0]
             y_global = gps.getValues()[1]
+
+            # Calculate distance traveled (metrics), only after lifting off
+            if not flag_lifting_off:
+                global total_distance_traveled, previous_location
+                if previous_location is not None:
+                    total_distance_traveled += np.linalg.norm(np.array([x_global, y_global, altitude]) - previous_location)
+                previous_location = np.array([x_global, y_global, altitude])
 
             # Calculate global velocities
             v_x_global = (x_global - past_x_global) / dt
@@ -308,26 +318,20 @@ def run_robot(robot):
     x_goal = current_location[0]
     y_goal = current_location[1]
     height_desired = current_location[2]
-    go_to_goal(x_goal, y_goal, altitude_goal)
+
+    flag_lifting_off = True
+    go_to_goal(x_goal, y_goal, altitude_goal, flag_lifting_off)
     print('finished lifting off')
+    flag_lifting_off = False
+    start_time = time.time()
+
     plan_coords = None
     
     last_time = time.time()
     TIME_TO_SEND = 0.5
     while robot.step(timestep) != -1:
         current_location = gps.getValues()
-        current_time = time.time()
-
-        if robot_name != "Drone":
-            # Check if Drone is about to crash into you
-            drone_position = get_enemy_drones_positions(["Drone"], [drone_robot])["Drone"]
-            distance_from_drone = np.linalg.norm(np.array(drone_position) - np.array(current_location))
-            if distance_from_drone < EPSILON:
-                print(f"Drone is about to crash into {robot_name}")
-                # enemy drone loses control
-                lose_control()
-                break
-
+        
         # Check for incoming packets
         if receiver.getQueueLength() > 0:
             messages = get_msg_from_cpu(receiver)
@@ -344,16 +348,16 @@ def run_robot(robot):
                     # only go to the new goal location if the distance is greater than EPSILON
                     if distance > EPSILON:
                         print(f"{robot_name} received goal location: {x_goal}, {y_goal}, {altitude_goal}")
-                        go_to_goal(x_goal, y_goal, altitude_goal)
+                        go_to_goal(x_goal, y_goal, altitude_goal, flag_lifting_off)
         elif plan_coords and len(plan_coords) > 0 and \
               np.linalg.norm(np.array([x_goal, y_goal, altitude_goal]) - np.array(current_location)) < EPSILON:
             # get the next goal location from the plan_coords
             x_goal, y_goal, altitude_goal = plan_coords.pop(0)
             if distance > EPSILON:
                 print(f"{robot_name} continuing to next goal location: {x_goal}, {y_goal}, {altitude_goal}")
-                go_to_goal(x_goal, y_goal, altitude_goal)
+                go_to_goal(x_goal, y_goal, altitude_goal, flag_lifting_off)
         else:
-            stay_in_position(robot_name)
+            stay_in_position(robot_name, flag_lifting_off)
             #go_to_goal(x_goal, y_goal, altitude_goal)
 
 

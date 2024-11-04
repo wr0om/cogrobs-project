@@ -13,7 +13,7 @@
 
 """crazyflie_controller_py controller."""
 import time
-import random
+from numpy import random
 import sys
 import os
 import numpy as np
@@ -98,16 +98,17 @@ def run_robot(robot):
     # emitter = robot.getDevice("emitter")
     # emitter.setChannel(CPU_CHANNEL)
 
-    def go_to_goal(x, y, z):
+
+    def go_to_goal(x, y, z, adverserial):
         print(f'going to {x}, {y}, {z}')
         nonlocal x_goal, y_goal, altitude_goal
         x_goal = x
         y_goal = y
         altitude_goal = z
-        execute_configuration(x_goal, y_goal, altitude_goal)
+        execute_configuration(x_goal, y_goal, altitude_goal, adverserial)
         print(f'goal reached {x}, {y}, {z}')
     
-    def stay_in_position(robot_name):
+    def stay_in_position(robot_name, adverserial):
         # if robot_name == "Drone":
         #     print('staying in position')
         nonlocal x_goal, y_goal, altitude_goal
@@ -117,14 +118,13 @@ def run_robot(robot):
         altitude_goal = gps.getValues()[2]
         starting_time = robot.getTime()
         while robot.getTime() - starting_time < 0.2:
-            execute_configuration(x_goal, y_goal, altitude_goal)
-        execute_configuration(x_goal, y_goal, altitude_goal)
+            execute_configuration(x_goal, y_goal, altitude_goal, adverserial)
+        execute_configuration(x_goal, y_goal, altitude_goal, adverserial)
         #print('finished staying in position')
 
-    def execute_configuration(x_goal, y_goal, altitude_goal):
+    def execute_configuration(x_goal, y_goal, altitude_goal, adverserial):
 
         nonlocal past_time, past_x_global, past_y_global, height_desired, x_global, y_global
-
         # Main loop executing the commands:
         forward_desired = 0
         sideways_desired = 0
@@ -132,10 +132,10 @@ def run_robot(robot):
         height_diff_desired = 0
 
         reached_goal = False
+        time_change = robot.getTime()
         while robot.step(timestep) != -1:
             dt = robot.getTime() - past_time
             actual_state = {}
-
             ## Get sensor data
             roll = imu.getRollPitchYaw()[0]
             pitch = imu.getRollPitchYaw()[1]
@@ -145,13 +145,23 @@ def run_robot(robot):
             x_global = gps.getValues()[0]
             y_global = gps.getValues()[1]
 
+
             drone_position = get_enemy_drones_positions(["Drone"], [drone_robot])["Drone"]
-            distance_from_drone = np.linalg.norm(np.array(drone_position) - np.array([x_global, y_global, altitude]))
+            vec = np.array([x_global, y_global, altitude]) - np.array(drone_position)
+            distance_from_drone = np.linalg.norm(vec)
             if distance_from_drone < EPSILON:
                 print(f"Drone is about to crash into {robot_name}")
                 # enemy drone loses control
                 lose_control()
                 break
+
+            if adverserial:
+                if distance_from_drone < 2.5 * EPSILON:
+                    #print(f"running away")
+                    vec = vec / distance_from_drone
+                    x_goal = (vec[0] + x_global) * 0.5 + x_goal * 0.5
+                    y_goal = (vec[1] + y_global) * 0.5 + y_goal * 0.5
+                    
 
             # Calculate global velocities
             v_x_global = (x_global - past_x_global) / dt
@@ -291,15 +301,15 @@ def run_robot(robot):
     
     global got_positions_from_cpu
     altitude_goal = -1
-    translation_new  = [random.randint(-3, 3), random.randint(-3, 3), random.randint(2, 3)]
-
+    translation_new  = [(random.random()-0.5)*10.0, (random.random()-0.5)*10.0, 1 + random.random()*3.0]
+    radius = 1 + random.random()*2.0
     robot_name = robot.getName()
     print(f"Robot name: {robot_name}")
-
     # set the channel to communicate with the cpu
     drone_channel = ENEMY_DRONE_CHANNEL
     supervisor = Supervisor()
-
+    receiver.setChannel(drone_channel)
+    # wait for the cpu to send the positions
     drone_robot = supervisor.getFromDef("Drone")
     robot_node = supervisor.getFromDef(robot_name)
     #set the new translation
@@ -309,27 +319,30 @@ def run_robot(robot):
     drone_robot = supervisor.getFromDef("Drone")
     robot_num = int(robot_name[-1])
     altitude_goal = translation_new[2]
-    receiver.setChannel(drone_channel)
-
     # lifting off
     while robot.step(timestep) != -1 and gps.getValues()[2] is None:
         pass
+
+    adverserial = True
+    inplace = True
+    moving = False
+
 
     current_location = gps.getValues()
     x_goal = current_location[0]
     y_goal = current_location[1]
     height_desired = current_location[2]
-    go_to_goal(x_goal, y_goal, altitude_goal)
+    go_to_goal(x_goal, y_goal, altitude_goal, adverserial)
     print('finished lifting off')
     plan_coords = None
     
     last_time = time.time()
+    first_time = time.time()
     TIME_TO_SEND = 0.5
-    inplace = False
+    time_to_stay = random.poisson(lam=15)
     while robot.step(timestep) != -1:
         current_location = gps.getValues()
         current_time = time.time()
-
         # Check if Drone is about to crash into you
         drone_position = get_enemy_drones_positions(["Drone"], [drone_robot])["Drone"]
         distance_from_drone = np.linalg.norm(np.array(drone_position) - np.array(current_location))
@@ -338,15 +351,25 @@ def run_robot(robot):
             # enemy drone loses control
             lose_control()
             break
+        elif moving and current_time - first_time > time_to_stay:
+            first_time = current_time
+            time_to_stay = random.poisson(lam=15)
+            print('moving to new location')
+            translation_new  = [(random.random()-0.5)*10.0, (random.random()-0.5)*10.0, 1 + random.random()*3.0]
+            radius = 1 + random.random()*2.0
+            go_to_goal(translation_new[0], translation_new[1], translation_new[2], adverserial)
         elif inplace:
-            stay_in_position(robot_name)
+            stay_in_position(robot_name, adverserial)
         else:
             distance = np.linalg.norm(np.array([x_goal, y_goal, altitude_goal]) - np.array(current_location))
             if distance < 0.1:
-                del_x, del_y, del_z = (random.random()-0.5)*4.0, (random.random()-0.5)*4.0, (random.random()-0.5)*2.0
-                x_goal, y_goal, altitude_goal = translation_new[0] + del_x,  translation_new[0] + del_y,  translation_new[0] + del_z
-                print(f"{robot_name} received go`al location: {x_goal}, {y_goal}, {altitude_goal}")
-                go_to_goal(x_goal, y_goal, altitude_goal)
+                alpha = random.random()*2.0*np.pi
+                thetha = random.random()*2.0*np.pi
+                r = random.random()*radius
+                del_x, del_y, del_z = r*np.cos(alpha)*np.sin(thetha), r*np.sin(alpha)*np.sin(thetha), r*np.cos(thetha)
+                x_goal, y_goal, altitude_goal = translation_new[0] + del_x,  translation_new[1] + del_y,  np.clip(translation_new[2] + del_z, 1, 8)
+                print(f"{robot_name} received goal location: {x_goal}, {y_goal}, {altitude_goal}")
+                go_to_goal(x_goal, y_goal, altitude_goal, adverserial)
 
 
 
