@@ -9,6 +9,7 @@ import ast
 import time
 import numpy as np
 
+
 libraries_path = os.path.abspath('../my_utils')
 sys.path.append(libraries_path)
 from controller import Robot, Supervisor
@@ -37,6 +38,8 @@ def replan_path(drones_positions, emitter):
     else:
         print("ERROR!!!! No plan found!")
     return planned_path, plan_coords
+
+
 
 def run_robot(robot):
     # get the time step of the current world.
@@ -88,6 +91,8 @@ def run_robot(robot):
     last_drone_positions = drones_positions
     current_plan = None
     goal_location = None
+    all_drone_locations = []
+    destroyed_drone_locations = []
 
     # for metrics
     start_time = time.time()
@@ -103,6 +108,7 @@ def run_robot(robot):
         # for metrics
         total_drone_distance += np.linalg.norm(np.array(drones_positions["Drone"]) - np.array(last_drone_location))
         last_drone_location = drones_positions["Drone"]
+        all_drone_locations.append(drones_positions["Drone"])
         
         distances_from_drone = {drone: np.linalg.norm(np.array(drones_positions["Drone"]) - np.array(position))\
                                  for drone, position in drones_positions.items() if drone != "Drone"}
@@ -111,10 +117,13 @@ def run_robot(robot):
         for drone, distance in distances_from_drone.items():
             if distance < EPSILON:
                 print(f"Drone is close to {drone}, REMOVING FROM CPU")
+                destroyed_drone_locations.append(drones_positions[drone])
+                
                 # DELETE DRONE FROM LISTS
                 drones_positions.pop(drone)
                 drone_robots.pop(robot_names.index(drone))
                 robot_names.remove(drone)
+
 
                 if len(drones_positions) == 1:
                     print("All drones are removed, STOPPING")
@@ -122,6 +131,8 @@ def run_robot(robot):
                     total_drone_time = end_time - start_time
                     print(f"Total Time: {total_drone_time}")
                     print(f"Total Distance Traveled: {total_drone_distance}")
+                    print("Plotting drone movement...")
+                    plot_drone_movement(all_drone_locations, destroyed_drone_locations, total_drone_time, total_drone_distance)
                     robot.step(-1)
                     break
 

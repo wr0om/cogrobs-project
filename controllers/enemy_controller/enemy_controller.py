@@ -327,7 +327,6 @@ def run_robot(robot):
     inplace = True
     moving = False
 
-
     current_location = gps.getValues()
     x_goal = current_location[0]
     y_goal = current_location[1]

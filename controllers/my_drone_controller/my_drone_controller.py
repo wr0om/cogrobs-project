@@ -33,7 +33,7 @@ FLYING_ATTITUDE = 1
 MAX_FORWARD_SPEED = 0.5
 MAX_SIDEWAY_SPEED = 0.5
 MAX_YAW_RATE = 1
-MAX_ALTITUDE = 2.5
+MAX_ALTITUDE = 4
 SPEEDING_UNIT = 0.005#0.005
 
 
@@ -103,8 +103,9 @@ def run_robot(robot):
     def go_to_goal(x, y, z, flag_lifting_off):
         print(f'going to {x}, {y}, {z}')
         nonlocal x_goal, y_goal, altitude_goal
-        x_goal = x
-        y_goal = y
+        # TODO: remove maybe?
+        x_goal = x + EPSILON / 3
+        y_goal = y + EPSILON / 3
         altitude_goal = z
         execute_configuration(x_goal, y_goal, altitude_goal, flag_lifting_off)
         print(f'goal reached {x}, {y}, {z}')
@@ -290,24 +291,13 @@ def run_robot(robot):
         m3_motor.setVelocity(0)
         m4_motor.setVelocity(0)
     
-    global got_positions_from_cpu
-    altitude_goal = -1
 
     robot_name = robot.getName()
     print(f"Robot name: {robot_name}")
 
-    # set the channel to communicate with the cpu
-    if robot_name == "Drone":
-        drone_channel = DRONE_CHANNEL
-        altitude_goal = MAX_ALTITUDE # Set your target altitude
-    else:
-        drone_channel = ENEMY_DRONE_CHANNEL
-        supervisor = Supervisor()
-        # get the drone robot
-        drone_robot = supervisor.getFromDef("Drone")
-        robot_num = int(robot_name[-1])
-        altitude_goal = robot_num
-
+    drone_channel = DRONE_CHANNEL
+    altitude_goal = MAX_ALTITUDE # Set your target altitude
+    
     receiver.setChannel(drone_channel)
 
     # lifting off
