@@ -39,7 +39,7 @@ SPEEDING_UNIT = 0.005#0.005
 
 
 # TODO: set seed for each experiment
-SEED = 1 # 1-5 for each experiment
+SEED = 4 # 1-5 for each experiment
 
 
 
@@ -515,8 +515,8 @@ def run_robot(robot):
     while robot.step(timestep) != -1 and gps.getValues()[2] is None:
         pass
 
-    adverserial = True
-    inplace = True
+    adverserial = False
+    inplace = False
     moving = False
 
     current_location = gps.getValues()
