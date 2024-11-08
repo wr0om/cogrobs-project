@@ -22,7 +22,7 @@ import time
 libraries_path = os.path.abspath('../my_utils')
 sys.path.append(libraries_path)
 
-from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON
+from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED
 from functions import *
 from controller import Robot, Keyboard, Supervisor
 
@@ -40,6 +40,9 @@ SPEEDING_UNIT = 0.005#0.005
 # for metrics
 previous_location = None
 total_distance_traveled = 0
+
+
+np.random.seed(SEED)
 
 
 def run_robot(robot):

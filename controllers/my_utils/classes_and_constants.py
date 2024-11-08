@@ -13,6 +13,7 @@ DRONE_CHANNEL = 1
 ENEMY_DRONE_CHANNEL = 2
 
 EPSILON = 0.5
+SEED = 1 # 1-5 for each experiment
 
 
 class Location:

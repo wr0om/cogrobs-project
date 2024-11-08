@@ -13,15 +13,34 @@ import numpy as np
 libraries_path = os.path.abspath('../my_utils')
 sys.path.append(libraries_path)
 from controller import Robot, Supervisor
-from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON
+from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED
 from planner import DronePathFinder
 from functions import *
 
 
-def replan_path(drones_positions, emitter):
+np.random.seed(SEED)
+
+
+def replan_path(drones_positions, emitter, use_random=False, use_radius=False, all_drone_radii=None):
     # get list of positions from drones, but "Drone" is the first element of the list
     drone_position = drones_positions["Drone"]
     position_list = [drone_position] + [position for drone, position in drones_positions.items() if drone != "Drone"]
+
+    if use_random:
+        enemy_drone_positions = position_list[1:]
+        # np random permutation of enemy drone positions
+        plan_coords = np.random.permutation(enemy_drone_positions)
+        # convert to regular list
+        plan_coords = [tuple(coords) for coords in plan_coords]
+        message = ("CPU", plan_coords)
+        send_msg_to_drone(emitter, message)
+        return plan_coords
+    
+    if use_radius:
+        #TODO: AFTER BEN FIXES HIS SCRIPT!
+        pass
+
+
     position_list = [coords_to_string(position) for position in position_list]
 
     path_finder = DronePathFinder(position_list)
@@ -37,8 +56,7 @@ def replan_path(drones_positions, emitter):
         send_msg_to_drone(emitter, message)
     else:
         print("ERROR!!!! No plan found!")
-    return planned_path, plan_coords
-
+    return plan_coords
 
 
 def run_robot(robot):
@@ -85,7 +103,6 @@ def run_robot(robot):
     # get robot objects
     drone_robots = [supervisor.getFromDef(name) for name in robot_names]
     drones_positions = get_enemy_drones_positions(robot_names, drone_robots)
-    #replan_path(drones_positions, emitter)
 
     last_replanner = time.time()
     last_drone_positions = drones_positions
@@ -100,10 +117,42 @@ def run_robot(robot):
     total_drone_distance = 0
     total_drone_time = 0
 
+
+    # experiments
+    use_random = False
+    use_centroids = False
+    all_drone_centroids = {drone: {"centroid": position, "count": 1} for drone, position in drones_positions.items() if drone != "Drone"}
+    use_radius = False
+    all_drone_radii = {drone: 0 for drone in all_drone_centroids.keys()}
+
+
     while robot.step(timestep) != -1:
         
         current_time = time.time()
         drones_positions = get_enemy_drones_positions(robot_names, drone_robots)
+
+        drone_pos = drones_positions["Drone"]
+        for drone, position in drones_positions.items():
+            if drone != "Drone":
+                centroid = np.array(all_drone_centroids[drone]["centroid"])
+                count = all_drone_centroids[drone]["count"]
+                new_centroid = (count * centroid + np.array(position)) / (count + 1)
+                all_drone_centroids[drone]["centroid"] = new_centroid
+                all_drone_centroids[drone]["count"] += 1
+
+        if use_radius:
+            # calculate radius as the largest distance from the centroid up to now
+            for drone, centroid in all_drone_centroids.items():
+                drone_position = drones_positions[drone]
+                distance = np.linalg.norm(np.array(drone_position) - np.array(centroid["centroid"]))
+                if distance > all_drone_radii[drone]:
+                    all_drone_radii[drone] = distance
+
+        if use_centroids:
+            drones_positions = {drone: all_drone_centroids[drone]["centroid"] for drone in all_drone_centroids.keys()}
+            drones_positions["Drone"] = drone_pos
+
+
 
         # for metrics
         total_drone_distance += np.linalg.norm(np.array(drones_positions["Drone"]) - np.array(last_drone_location))
@@ -113,7 +162,6 @@ def run_robot(robot):
         distances_from_drone = {drone: np.linalg.norm(np.array(drones_positions["Drone"]) - np.array(position))\
                                  for drone, position in drones_positions.items() if drone != "Drone"}
         
-
         for drone, distance in distances_from_drone.items():
             if distance < EPSILON:
                 print(f"Drone is close to {drone}, REMOVING FROM CPU")
@@ -123,6 +171,7 @@ def run_robot(robot):
                 drones_positions.pop(drone)
                 drone_robots.pop(robot_names.index(drone))
                 robot_names.remove(drone)
+                all_drone_centroids.pop(drone)
 
 
                 if len(drones_positions) == 1:
@@ -138,7 +187,7 @@ def run_robot(robot):
 
         # replan only after removing a drone and 2 seconds have passed
         if current_time - last_replanner > 2 or len(last_drone_positions) != len(drones_positions):
-            current_plan, plan_coords = replan_path(drones_positions, emitter)
+            plan_coords = replan_path(drones_positions, emitter, use_random, use_radius, all_drone_radii)
             last_replanner = current_time
             last_drone_positions = drones_positions
 

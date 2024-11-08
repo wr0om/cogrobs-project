@@ -11,9 +11,10 @@ warnings.simplefilter("ignore", UserWarning)
 
 
 class DronePathFinder:
-    def __init__(self, locations):
+    def __init__(self, locations, r=0):
         up.shortcuts.get_env().credits_stream = None
         self.locations = locations
+        self.r = r
         self.location_type = UserType("Location")
         self.problem = Problem("drone_path_finder_project")
         self.object2name = {}
@@ -49,7 +50,7 @@ class DronePathFinder:
         for i in range(len(location_objects)):
             for j in range(len(location_objects)):
                 if i != j:
-                    cost = self.calc_distance(self.locations[i], self.locations[j])
+                    cost = self.calc_distance(self.locations[i], self.locations[j]) + 2*self.r
                     self.costs[(location_objects[i], location_objects[j])] = cost
                     self.costs[(location_objects[j], location_objects[i])] = cost
 

@@ -23,7 +23,7 @@ import time
 libraries_path = os.path.abspath('../my_utils')
 sys.path.append(libraries_path)
 
-from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON
+from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED
 from functions import *
 from controller import Robot, Keyboard, Supervisor
 
@@ -36,10 +36,6 @@ MAX_SIDEWAY_SPEED = 0.5
 MAX_YAW_RATE = 1
 MAX_ALTITUDE = 2.5
 SPEEDING_UNIT = 0.005#0.005
-
-
-# TODO: set seed for each experiment
-SEED = 4 # 1-5 for each experiment
 
 
 
@@ -516,7 +512,7 @@ def run_robot(robot):
         pass
 
     adverserial = False
-    inplace = False
+    inplace = True
     moving = False
 
     current_location = gps.getValues()
