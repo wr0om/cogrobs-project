@@ -13,7 +13,19 @@ DRONE_CHANNEL = 1
 ENEMY_DRONE_CHANNEL = 2
 
 EPSILON = 0.5
-SEED = 1 # 1-5 for each experiment
+
+
+# For Experiments
+SEED = 2 # 1-5 for each experiment
+# enemy drone
+ADVERSARIAL = False
+INPLACE = False
+MOVING = False
+
+# planning
+USE_RANDOM = True
+USE_CENTROIDS = False
+USE_RADIUS = False
 
 
 class Location:

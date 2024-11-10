@@ -13,16 +13,49 @@ import numpy as np
 libraries_path = os.path.abspath('../my_utils')
 sys.path.append(libraries_path)
 from controller import Robot, Supervisor
-from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED
-from planner import DronePathFinder
+from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED, USE_RANDOM, USE_CENTROIDS, USE_RADIUS, ADVERSARIAL, INPLACE, MOVING
+from planner import DronePathFinderWithUncertainty
 from functions import *
 
-
 np.random.seed(SEED)
+
+path_to_save = "../experiments/"
+
+if INPLACE:
+    path_to_save += f"inplace/"
+elif MOVING:
+    path_to_save += f"moving_spheres/"
+elif ADVERSARIAL:
+    path_to_save += f"adversarial/"
+else:
+    path_to_save += f"moving/"
+
+if USE_RANDOM:
+    path_to_save += "baseline/"
+elif USE_CENTROIDS:
+    path_to_save += "centroid/"
+elif USE_RADIUS:
+    path_to_save += "radius/"
+else:
+    path_to_save += "optimal/"
+
+if not os.path.exists(path_to_save):
+    os.makedirs(path_to_save)
+
+file_path = path_to_save + f"seed_{SEED}.png"
+
+
+
 
 
 def replan_path(drones_positions, emitter, use_random=False, use_radius=False, all_drone_radii=None):
     # get list of positions from drones, but "Drone" is the first element of the list
+
+    if use_radius and all_drone_radii:
+        radii_list = [radius for drone, radius in all_drone_radii.items() if drone != "Drone"]
+    else:
+        radii_list = [0 for drone in drones_positions.keys() if drone != "Drone"]
+
     drone_position = drones_positions["Drone"]
     position_list = [drone_position] + [position for drone, position in drones_positions.items() if drone != "Drone"]
 
@@ -43,7 +76,7 @@ def replan_path(drones_positions, emitter, use_random=False, use_radius=False, a
 
     position_list = [coords_to_string(position) for position in position_list]
 
-    path_finder = DronePathFinder(position_list)
+    path_finder = DronePathFinderWithUncertainty(position_list, radii_list)
     print("Planning path...")
     planned_path = path_finder.solve()
     print(f"Planned_path: {planned_path}")
@@ -117,12 +150,18 @@ def run_robot(robot):
     total_drone_distance = 0
     total_drone_time = 0
 
+    # computer doenst start until our drone is high enough
+    while drones_positions["Drone"][2] < 3.9:
+        #print("Drone is not high enough, waiting...")
+        drones_positions = get_enemy_drones_positions(robot_names, drone_robots)
+        robot.step(timestep)
+
 
     # experiments
-    use_random = False
-    use_centroids = False
+    use_random = USE_RANDOM
+    use_centroids = USE_CENTROIDS
     all_drone_centroids = {drone: {"centroid": position, "count": 1} for drone, position in drones_positions.items() if drone != "Drone"}
-    use_radius = False
+    use_radius = USE_RADIUS
     all_drone_radii = {drone: 0 for drone in all_drone_centroids.keys()}
 
 
@@ -181,7 +220,7 @@ def run_robot(robot):
                     print(f"Total Time: {total_drone_time}")
                     print(f"Total Distance Traveled: {total_drone_distance}")
                     print("Plotting drone movement...")
-                    plot_drone_movement(all_drone_locations, destroyed_drone_locations, total_drone_time, total_drone_distance)
+                    plot_drone_movement(all_drone_locations, destroyed_drone_locations, total_drone_time, total_drone_distance, file_path)
                     robot.step(-1)
                     break
 

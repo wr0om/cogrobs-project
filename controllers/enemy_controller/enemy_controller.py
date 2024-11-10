@@ -23,7 +23,7 @@ import time
 libraries_path = os.path.abspath('../my_utils')
 sys.path.append(libraries_path)
 
-from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED
+from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED, ADVERSARIAL, INPLACE, MOVING
 from functions import *
 from controller import Robot, Keyboard, Supervisor
 
@@ -504,16 +504,15 @@ def run_robot(robot):
     drone_robot = supervisor.getFromDef("Drone")
 
 
-
-
     altitude_goal = translation_new[2]
     # lifting off
     while robot.step(timestep) != -1 and gps.getValues()[2] is None:
         pass
 
-    adverserial = False
-    inplace = True
-    moving = False
+    adverserial = ADVERSARIAL
+    inplace = INPLACE
+    moving = MOVING
+
 
     current_location = gps.getValues()
     x_goal = current_location[0]

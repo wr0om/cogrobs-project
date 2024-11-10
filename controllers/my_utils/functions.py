@@ -82,7 +82,7 @@ def get_enemy_drones_positions(enemy_drone_names, enemy_drone_robots):
         enemy_drone_positions[enemy_name] = enemy_position
     return enemy_drone_positions
 
-def plot_drone_movement(all_drone_locations, destroyed_drone_locations, total_drone_time, total_drone_distance):
+def plot_drone_movement(all_drone_locations, destroyed_drone_locations, total_drone_time, total_drone_distance, file_path):
     # Extract coordinates from the movement and destroyed locations
     x_coords = [coord[0] for coord in all_drone_locations]
     y_coords = [coord[1] for coord in all_drone_locations]
@@ -151,8 +151,8 @@ def plot_drone_movement(all_drone_locations, destroyed_drone_locations, total_dr
     # Add legend for clarity
     ax.legend(loc="best", fontsize=10)
 
-    # Save the plot as 'drone_movement.png'
-    plt.savefig('drone_movement.png', dpi=300)
+    # Save the plot to a file
+    plt.savefig(file_path, dpi=300)
 
     # Show the plot
     plt.show()

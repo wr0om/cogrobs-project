@@ -9,14 +9,12 @@ import warnings
 
 warnings.simplefilter("ignore", UserWarning)
 
-
-class DronePathFinder:
-    def __init__(self, locations, r=0):
-        up.shortcuts.get_env().credits_stream = None
+class DronePathFinderWithUncertainty:
+    def __init__(self, locations, rad_list):
         self.locations = locations
-        self.r = r
         self.location_type = UserType("Location")
         self.problem = Problem("drone_path_finder_project")
+        self.rad_list = rad_list
         self.object2name = {}
         self.costs = {}
         self.mac = {}
@@ -48,11 +46,13 @@ class DronePathFinder:
 
         # Calculate distances and action costs
         for i in range(len(location_objects)):
-            for j in range(len(location_objects)):
+            for j in range(i+1, len(location_objects)):
                 if i != j:
-                    cost = self.calc_distance(self.locations[i], self.locations[j]) + 2*self.r
-                    self.costs[(location_objects[i], location_objects[j])] = cost
-                    self.costs[(location_objects[j], location_objects[i])] = cost
+                    cost = self.calc_distance(self.locations[i], self.locations[j])
+                    rad = 2*(self.rad_list[j - 1] if j > 0 else 0)
+                    self.costs[(location_objects[i], location_objects[j])] = cost + rad
+                    self.costs[(location_objects[j], location_objects[i])] = cost + rad
+                    print(f"rad: {rad}, cost: {cost}")
 
         # Create actions for moving between locations
         for (loc1, loc2), cost in self.costs.items():
@@ -89,17 +89,17 @@ class DronePathFinder:
             for a in self.plan.actions:
                 total_cost += self.mac[a.action]._content.payload
         return total_cost
-    
+
     def get_plan_coords(self):
-        if self.plan:
-            actions = self.plan.actions
-            plan_coords = []
-            for action in actions:
-                input_str = str(action)
-                goal_x, goal_y, goal_z = [float(coord) for coord in input_str.split('->')[1].strip()[1:-1].split(',')]
-                plan_coords.append((goal_x, goal_y, goal_z))
-            return plan_coords
-        return None
+            if self.plan:
+                actions = self.plan.actions
+                plan_coords = []
+                for action in actions:
+                    input_str = str(action)
+                    goal_x, goal_y, goal_z = [float(coord) for coord in input_str.split('->')[1].strip()[1:-1].split(',')]
+                    plan_coords.append((goal_x, goal_y, goal_z))
+                return plan_coords
+            return None
 
 
 def random_location_generator(num_locations, x_range=(0, 50), y_range=(0, 50), z_range=(0, 50)):
