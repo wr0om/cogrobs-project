@@ -16,14 +16,15 @@ EPSILON = 0.5
 
 
 # For Experiments
-SEED = 2 # 1-5 for each experiment
+SEED = 4 # 1-5 for each experiment
 # enemy drone
 ADVERSARIAL = False
 INPLACE = False
 MOVING = False
+OBSTACLES = True
 
 # planning
-USE_RANDOM = True
+USE_RANDOM = False
 USE_CENTROIDS = False
 USE_RADIUS = False
 

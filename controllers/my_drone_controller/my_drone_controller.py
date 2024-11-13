@@ -22,7 +22,7 @@ import time
 libraries_path = os.path.abspath('../my_utils')
 sys.path.append(libraries_path)
 
-from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED
+from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED, OBSTACLES
 from functions import *
 from controller import Robot, Keyboard, Supervisor
 
@@ -43,7 +43,6 @@ total_distance_traveled = 0
 
 
 np.random.seed(SEED)
-
 
 def run_robot(robot):
     timestep = int(robot.getBasicTimeStep())
@@ -79,6 +78,17 @@ def run_robot(robot):
     range_back.enable(timestep)
     range_right = robot.getDevice("range_right")
     range_right.enable(timestep)
+
+    if OBSTACLES:
+        ## Initialize distance sensors
+        ps = []
+        psNames = [
+            'ds0', 'ds1', 'ds2', 'ds3',
+            'ds4', 'ds5', 'ds6', 'ds7'
+        ]
+        for i in range(8):
+            ps.append(robot.getDevice(psNames[i]))
+            ps[i].enable(timestep)
 
     ## Get keyboard
     keyboard = Keyboard()
@@ -128,9 +138,7 @@ def run_robot(robot):
         #print('finished staying in position')
 
     def execute_configuration(x_goal, y_goal, altitude_goal, flag_lifting_off):
-
         nonlocal past_time, past_x_global, past_y_global, height_desired, x_global, y_global
-
         # Main loop executing the commands:
         forward_desired = 0
         sideways_desired = 0
@@ -138,10 +146,20 @@ def run_robot(robot):
         height_diff_desired = 0
 
         reached_goal = False
+        time_change = robot.getTime()
+        moving_direction_clear = True
+        x_save_goal, y_save_goal = x_goal, y_goal
+        first_time = True
+        stops = False
+        prev_obstacle_values = [p.getValue() for p in ps]
+        prev_new = [False for _ in range(8)]
+        encontered = [False for _ in range(8)]
+        start_time = robot.getTime()
+        moving = False
+        pool = True
         while robot.step(timestep) != -1:
             dt = robot.getTime() - past_time
             actual_state = {}
-
             ## Get sensor data
             roll = imu.getRollPitchYaw()[0]
             pitch = imu.getRollPitchYaw()[1]
@@ -157,6 +175,52 @@ def run_robot(robot):
                 if previous_location is not None:
                     total_distance_traveled += np.linalg.norm(np.array([x_global, y_global, altitude]) - previous_location)
                 previous_location = np.array([x_global, y_global, altitude])
+            
+            
+            final_eq_goal = True
+            #obstacle avoidance
+            if OBSTACLES:
+                moving_direction_vector = np.array([x_goal, y_goal]) - np.array([x_global, y_global])
+                goal_direction_vector = np.array([x_save_goal, y_save_goal]) - np.array([x_global, y_global])
+                moving_angle = np.arctan2(moving_direction_vector[1], moving_direction_vector[0])
+                obstacle_values  = [p.getValue()  for p in ps]
+                def_values = [pp - p for p, pp in zip(obstacle_values, prev_obstacle_values)]
+                detected_obstacle  = [(10 < d < 100) and p < 950.0  for p, d in zip(obstacle_values, def_values)]
+                detected_obstacle_x  = [(0 < d < 10) and p < 400.0  for p, d in zip(obstacle_values, def_values)]
+                found_new  = find_new_obstacle(detected_obstacle, prev_new, def_values)
+                # found_new  = [not(prev_new[(i-1)%8] or prev_new[(i +1)%8]) and (detected_obstacle[i] and(detected_obstacle[(i-1)%8] or detected_obstacle[(i+1)%8])) for i in range(8)]
+                remove_obstacle = [prev_new[i] and (obstacle_values[i] > 950) for i in range(8)]
+                final_eq_goal = x_goal == x_save_goal and y_goal == y_save_goal
+                norm = np.linalg.norm(moving_direction_vector)
+                if any(found_new) and not stops:
+                    print('obstacle detected stopping')
+                    x_goal, y_goal = x_global, y_global
+                    stops = True
+                elif reached_goal and stops:
+                    print('moving left')
+                    vector_angle = moving_angle + np.pi/2 if pool else moving_angle - np.pi/2
+                    moving_obs_vector = np.array([np.cos(vector_angle), np.sin(vector_angle)]) + np.array([x_global, y_global])
+                    x_goal, y_goal = moving_obs_vector
+                    reached_goal = False
+                    stops = False
+                    print(x_goal, y_goal)
+                elif all([p==False for p in prev_new]):
+                    x_goal, y_goal = x_save_goal, y_save_goal
+                    pool = not pool
+                elif any(detected_obstacle_x) and not stops and (robot.getTime() - start_time ) > 0.1:
+                    print('getting closer to wall')
+                    moving_from_wall = moving_angle + 0.05 * np.pi/2 if pool else moving_angle -  0.05 * np.pi/2 
+                    x_goal, y_goal = np.array([np.cos(moving_from_wall), np.sin(moving_from_wall)]) + np.array([x_global, y_global])
+                    start_time = robot.getTime()
+                elif (norm < 0.2) and not final_eq_goal and not stops:
+                    x_goal, y_goal = np.array([np.cos(vector_angle), np.sin(vector_angle)]) + np.array([x_global, y_global])
+
+                # if any(remove_obstacle):
+                #     x_goal, y_goal = x_save_goal, y_save_goal
+                prev_new = [(p or q) and not t for p, q, t in zip(prev_new, found_new, remove_obstacle)]
+                encontered = [p or q for p, q in zip(encontered, found_new)]
+                prev_obstacle_values = obstacle_values
+                    
 
             # Calculate global velocities
             v_x_global = (x_global - past_x_global) / dt
@@ -171,6 +235,7 @@ def run_robot(robot):
             ## Initialize values
             initial_state = {"pos": np.array([x_global, y_global, altitude]), "moment": np.array([v_x, v_y, yaw])}
             desired_state = {"pos": np.array([x_goal, y_goal, altitude_goal]), "moment": np.array([0, 0, 0])}
+            final_state = {"pos": np.array([x_save_goal, y_save_goal, altitude_goal]), "moment": np.array([0, 0, 0])}
 
             desired_direction = desired_state["pos"] - initial_state["pos"]
             if np.linalg.norm(desired_direction) != 0:
@@ -285,7 +350,7 @@ def run_robot(robot):
             past_x_global = x_global
             past_y_global = y_global
 
-            if reached_goal:
+            if reached_goal and final_eq_goal:
                 return
     
     def lose_control():

@@ -13,6 +13,24 @@ from scipy.interpolate import make_interp_spline
 
 channels_to_str = {CPU_CHANNEL: "CPU", DRONE_CHANNEL: "DRONE"}
 
+
+def find_new_obstacle(detected_obstacle, prev_new, def_values):
+    found_new = []
+    for i in range(8):
+        if not(prev_new[(i-1)%8] or prev_new[(i +1)%8]):
+            if detected_obstacle[i] and(detected_obstacle[(i-1)%8] or detected_obstacle[(i+1)%8]):
+                found_new.append(True)
+            else:
+                found_new.append(False)
+        elif prev_new[(i-2)%8] or prev_new[(i +2)%8]:
+            if detected_obstacle[i] and(detected_obstacle[(i-1)%8] or detected_obstacle[(i+1)%8]) and def_values[i] > 1:
+                found_new.append(True)
+            else:
+                found_new.append(False)
+        else:
+            found_new.append(False)
+    return found_new
+
 def get_positions_graph_from_cpu(receiver, emitter, graph, got_positions = False):
     nodes = graph.get_nodes()
     len_nodes = len(nodes)
