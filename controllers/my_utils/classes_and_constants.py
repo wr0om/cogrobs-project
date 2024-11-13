@@ -21,7 +21,7 @@ SEED = 4 # 1-5 for each experiment
 ADVERSARIAL = False
 INPLACE = False
 MOVING = False
-OBSTACLES = True
+OBSTACLES = False
 
 # planning
 USE_RANDOM = False

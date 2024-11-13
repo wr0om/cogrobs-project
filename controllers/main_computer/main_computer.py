@@ -192,7 +192,6 @@ def run_robot(robot):
             drones_positions["Drone"] = drone_pos
 
 
-
         # for metrics
         total_drone_distance += np.linalg.norm(np.array(drones_positions["Drone"]) - np.array(last_drone_location))
         last_drone_location = drones_positions["Drone"]
@@ -225,7 +224,7 @@ def run_robot(robot):
                     break
 
         # replan only after removing a drone and 2 seconds have passed
-        if current_time - last_replanner > 2 or len(last_drone_positions) != len(drones_positions):
+        if current_time - last_replanner > 3 or len(last_drone_positions) != len(drones_positions):
             plan_coords = replan_path(drones_positions, emitter, use_random, use_radius, all_drone_radii)
             last_replanner = current_time
             last_drone_positions = drones_positions

@@ -146,7 +146,8 @@ def run_robot(robot):
         x_save_goal, y_save_goal = x_goal, y_goal
         first_time = True
         stops = False
-        prev_obstacle_values = [p.getValue() for p in ps]
+        if OBSTACLES:
+            prev_obstacle_values = [p.getValue() for p in ps]
         prev_new = [False for _ in range(8)]
         encontered = [False for _ in range(8)]
         start_time = robot.getTime()
