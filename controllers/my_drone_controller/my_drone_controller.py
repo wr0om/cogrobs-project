@@ -190,25 +190,25 @@ def run_robot(robot):
                     total_distance_traveled += np.linalg.norm(np.array([x_global, y_global, altitude]) - previous_location)
                 previous_location = np.array([x_global, y_global, altitude])
             
-            
-            final_eq_goal = x_goal == x_save_goal and y_goal == y_save_goal
-            if receiver.getQueueLength() > 0:
-                messages = get_msg_from_cpu(receiver)
-                print(f"Messages {robot_name} got: {messages}")
-                # get last message sent by the CPU, reverse the list to get the last message first
-                messages.reverse()
-                for message in messages:
-                    if message[0] == "CPU":
-                        print(f"Received message from CPU: {message}")
-                        plan_coords = message[1]
-                        # get the goal location from the CPU
-                        if final_eq_goal:
-                            x = plan_coords.pop(0)
-                            x_goal, y_goal, altitude_goal = x
-                        else:
-                            x = plan_coords.pop(0)
-                            x_save_goal, y_save_goal, altitude_goal = x            #obstacle avoidance
             if OBSTACLES:
+                final_eq_goal = x_goal == x_save_goal and y_goal == y_save_goal
+                if receiver.getQueueLength() > 0:
+                    messages = get_msg_from_cpu(receiver)
+                    print(f"Messages {robot_name} got: {messages}")
+                    # get last message sent by the CPU, reverse the list to get the last message first
+                    messages.reverse()
+                    for message in messages:
+                        if message[0] == "CPU":
+                            print(f"Received message from CPU: {message}")
+                            plan_coords = message[1]
+                            # get the goal location from the CPU
+                            if final_eq_goal:
+                                x = plan_coords.pop(0)
+                                x_goal, y_goal, altitude_goal = x
+                            else:
+                                x = plan_coords.pop(0)
+                                x_save_goal, y_save_goal, altitude_goal = x            #obstacle avoidance
+
                 moving_direction_vector = np.array([x_goal, y_goal]) - np.array([x_global, y_global])
                 goal_direction_vector = np.array([x_save_goal, y_save_goal]) - np.array([x_global, y_global])
                 moving_angle = np.arctan2(moving_direction_vector[1], moving_direction_vector[0])
