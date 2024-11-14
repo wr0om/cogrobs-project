@@ -61,7 +61,7 @@ def replan_path(drones_positions, emitter, use_random=False, use_radius=False, a
     # if only one drone left, send its location
     if len(position_list) == 2:
         print("Only one drone left, sending its location")
-        plan_coords = [position_list[1]]
+        plan_coords = [tuple([float(coord) for coord in position_list[1]])]
         message = ("CPU", plan_coords)
         send_msg_to_drone(emitter, message)
         return plan_coords
