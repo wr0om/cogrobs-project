@@ -426,14 +426,15 @@ def run_robot(robot):
                     #if distance > EPSILON:
                     print(f"{robot_name} received goal location: {x_goal}, {y_goal}, {altitude_goal}")
                     go_to_goal(x_goal, y_goal, altitude_goal, flag_lifting_off)
+                    break
         elif plan_coords and len(plan_coords) > 0 and \
               np.linalg.norm(np.array([x_goal, y_goal, altitude_goal]) \
                              - np.array(current_location)) < EPSILON:
             # get the next goal location from the plan_coords
             x_goal, y_goal, altitude_goal = plan_coords.pop(0)
-            if distance > EPSILON:
-                print(f"{robot_name} continuing to next goal location: {x_goal}, {y_goal}, {altitude_goal}")
-                go_to_goal(x_goal, y_goal, altitude_goal, flag_lifting_off)
+            # if distance > EPSILON:
+            print(f"{robot_name} continuing to next goal location: {x_goal}, {y_goal}, {altitude_goal}")
+            go_to_goal(x_goal, y_goal, altitude_goal, flag_lifting_off)
         else:
             stay_in_position(robot_name, flag_lifting_off)
 

@@ -235,8 +235,8 @@ def run_robot(robot):
                     robot.step(-1)
                     break
 
-        # replan only after removing a drone and 8 seconds have passed
-        if current_time - last_replanner > 8 or \
+        # replan only after removing a drone or 6 seconds have passed
+        if current_time - last_replanner > 6 or \
               len(last_drone_positions) != len(drones_positions):
             plan_coords = replan_path(drones_positions, emitter,\
                                        use_random, use_radius, all_drone_radii)
