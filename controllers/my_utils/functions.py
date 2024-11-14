@@ -1,32 +1,26 @@
 
 from classes_and_constants import CPU_CHANNEL, DRONE_CHANNEL
-from classes_and_constants import Location, Edge, GraphNode, Entity, Graph
-from classes_and_constants import get_graph
-
-import math
 import ast
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from scipy.interpolate import make_interp_spline
 
 
 channels_to_str = {CPU_CHANNEL: "CPU", DRONE_CHANNEL: "DRONE"}
 
-
-def find_new_obstacle(detected_obstacle, prev_new, def_values):
+def find_new_obstacle1(obs_ps0, detected_obstacle0, detected_obstacle1, def_values0, prev_new):
     found_new = []
     for i in range(8):
-        if not(prev_new[(i-1)%8] or prev_new[(i +1)%8]):
-            if detected_obstacle[i] and(detected_obstacle[(i-1)%8] or detected_obstacle[(i+1)%8]):
-                found_new.append(True)
-            else:
+        if detected_obstacle0[i] and detected_obstacle1[i] and (detected_obstacle0[(i+1)%8] and detected_obstacle1[(i+1)%8] or detected_obstacle0[(i-1)%8] and detected_obstacle1[(i-1)%8]): 
+            if detected_obstacle0[(i+2)%8] and detected_obstacle1[(i+2)%8] or detected_obstacle0[(i-2)%8] and detected_obstacle1[(i-2)%8]:
                 found_new.append(False)
-        elif prev_new[(i-2)%8] or prev_new[(i +2)%8]:
-            if detected_obstacle[i] and(detected_obstacle[(i-1)%8] or detected_obstacle[(i+1)%8]) and def_values[i] > 1:
-                found_new.append(True)
             else:
-                found_new.append(False)
+                if prev_new[i] and def_values0[i] < 15:
+                    found_new.append(False)
+                else:
+                    found_new.append(True)
+        elif obs_ps0[i] < 500.0 and def_values0[i]>2:
+            found_new.append(True)
         else:
             found_new.append(False)
     return found_new
