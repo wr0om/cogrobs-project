@@ -19,27 +19,30 @@ from functions import *
 np.random.seed(SEED)
 
 path_to_save = "../experiments/"
-
-if INPLACE:
-    path_to_save += f"inplace/"
-elif MOVING:
-    path_to_save += f"moving_spheres/"
-elif ADVERSARIAL:
-    path_to_save += f"adversarial/"
-else:
-    path_to_save += f"moving/"
-
-if USE_RANDOM:
-    path_to_save += "baseline/"
-elif USE_CENTROIDS:
-    path_to_save += "centroid/"
-elif USE_RADIUS:
-    path_to_save += "radius/"
-else:
-    path_to_save += "optimal/"
-
 if not os.path.exists(path_to_save):
     os.makedirs(path_to_save)
+
+
+if INPLACE:
+    path_to_save += f"inplace-"
+else:
+    path_to_save += f"moving-"
+if MOVING:
+    path_to_save += f"moving_spheres-"
+if ADVERSARIAL:
+    path_to_save += f"adversarial-"
+
+
+if USE_RANDOM:
+    path_to_save += "random-"
+else:
+    path_to_save += "optimal-"
+if USE_CENTROIDS:
+    path_to_save += "centroid-"
+if USE_RADIUS:
+    path_to_save += "radius-"
+if OBSTACLES:
+    path_to_save += "obstacles-"
 
 file_path = path_to_save + f"seed_{SEED}.png"
 

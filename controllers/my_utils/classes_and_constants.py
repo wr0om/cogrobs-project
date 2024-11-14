@@ -13,21 +13,37 @@ DRONE_CHANNEL = 1
 ENEMY_DRONE_CHANNEL = 2
 
 EPSILON = 0.5
-LAMBDA = 15
+LAMBDA = 30
 
 
 # For Experiments
 SEED = 1 # 1-3 for each experiment
+
 # enemy drone
-ADVERSARIAL = False
-INPLACE = False
+INPLACE = True
 MOVING = False
+ADVERSARIAL = False
 OBSTACLES = True
 
 # planning
-USE_RANDOM = False
-USE_CENTROIDS = False
-USE_RADIUS = False
+PLANNING_EXPERIMENT = 1 # 1-4 for each experiment
+
+if PLANNING_EXPERIMENT == 1:
+    USE_RANDOM = True
+    USE_CENTROIDS = False
+    USE_RADIUS = False
+elif PLANNING_EXPERIMENT == 2:
+    USE_RANDOM = False
+    USE_CENTROIDS = False
+    USE_RADIUS = False
+elif PLANNING_EXPERIMENT == 3:
+    USE_RANDOM = False
+    USE_CENTROIDS = True
+    USE_RADIUS = False
+elif PLANNING_EXPERIMENT == 4:
+    USE_RANDOM = False
+    USE_CENTROIDS = False
+    USE_RADIUS = True
 
 
 class Location:

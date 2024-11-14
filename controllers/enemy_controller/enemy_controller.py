@@ -471,11 +471,9 @@ def run_robot(robot):
     first_time = 0
     TIME_TO_SEND = 0.5
     time_to_stay = random.poisson(lam=LAMBDA)
-    sim_time = 0.0
     while robot.step(timestep) != -1:
-        sim_time += timestep / 1000.0  # Convert ms to seconds
         current_location = gps.getValues()
-        current_time = sim_time
+        current_time = robot.getTime()
         # Check if Drone is about to crash into you
         drone_position = get_enemy_drones_positions(["Drone"], [drone_robot])["Drone"]
         distance_from_drone = np.linalg.norm(np.array(drone_position) - np.array(current_location))
