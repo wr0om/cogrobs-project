@@ -190,8 +190,8 @@ def run_robot(robot):
                     total_distance_traveled += np.linalg.norm(np.array([x_global, y_global, altitude]) - previous_location)
                 previous_location = np.array([x_global, y_global, altitude])
             
+            final_eq_goal = x_goal == x_save_goal and y_goal == y_save_goal
             if OBSTACLES:
-                final_eq_goal = x_goal == x_save_goal and y_goal == y_save_goal
                 if receiver.getQueueLength() > 0:
                     messages = get_msg_from_cpu(receiver)
                     print(f"Messages {robot_name} got: {messages}")
