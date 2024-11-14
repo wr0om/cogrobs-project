@@ -22,6 +22,12 @@ path_to_save = "../experiments/"
 if not os.path.exists(path_to_save):
     os.makedirs(path_to_save)
 
+all_results = path_to_save + "all_results.csv"
+if not os.path.exists(all_results):
+    with open(all_results, "w") as f:
+        f.write("SEED,PLANNING_EXPERIMENT,INPLACE,MOVING,ADVERSARIAL,OBSTACLES,Time,Distance\n")
+
+
 
 if INPLACE:
     path_to_save += f"inplace-"
@@ -226,6 +232,8 @@ def run_robot(robot):
                     print("Plotting drone movement...")
                     plot_drone_movement(all_drone_locations, destroyed_drone_locations,\
                                          total_drone_time, total_drone_distance, file_path)
+                    with open(all_results, "a") as f:
+                        f.write(f"{SEED},{PLANNING_EXPERIMENT},{INPLACE},{MOVING},{ADVERSARIAL},{OBSTACLES},{total_drone_time},{total_drone_distance}\n")
                     robot.step(-1)
                     break
 
