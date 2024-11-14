@@ -12,18 +12,16 @@
 # Controls the crazyflie motors in webots in Python
 
 """crazyflie_controller_py controller."""
-import time
 from numpy import random
 import sys
 import os
 import numpy as np
 from math import cos, sin
 import sys
-import time
 libraries_path = os.path.abspath('../my_utils')
 sys.path.append(libraries_path)
 
-from classes_and_constants import DRONE_CHANNEL, CPU_CHANNEL, ENEMY_DRONE_CHANNEL, EPSILON, SEED, ADVERSARIAL, INPLACE, MOVING, OBSTACLES
+from classes_and_constants import *
 from functions import *
 from controller import Robot, Keyboard, Supervisor
 
@@ -384,7 +382,7 @@ def run_robot(robot):
         child_node = children_field.getMFNode(i)
 
         # Check if the node is of type 'Robot'
-        if child_node is not None and child_node.getTypeName() == "OilBarrel":
+        if child_node and child_node.getTypeName() == "OilBarrel":
             # Access the 'name' field of the robot node
             name_field = child_node.getField("name")
             if name_field:
@@ -439,7 +437,6 @@ def run_robot(robot):
     inplace = INPLACE
     moving = MOVING
 
-
     current_location = gps.getValues()
     x_goal = current_location[0]
     y_goal = current_location[1]
@@ -448,13 +445,14 @@ def run_robot(robot):
     print('finished lifting off')
     plan_coords = None
     
-    last_time = time.time()
-    first_time = time.time()
-    TIME_TO_SEND = 0.5
-    time_to_stay = random.poisson(lam=15)
+    first_time = 0
+    sim_time = 0.0
+    time_to_stay = random.poisson(lam=LAMBDA)
     while robot.step(timestep) != -1:
+        sim_time += timestep / 1000.0  # Convert ms to seconds
+
         current_location = gps.getValues()
-        current_time = time.time()
+        current_time = sim_time
         # Check if Drone is about to crash into you
         drone_position = get_enemy_drones_positions(["Drone"], [drone_robot])["Drone"]
         distance_from_drone = np.linalg.norm(np.array(drone_position) - np.array(current_location))
@@ -465,7 +463,7 @@ def run_robot(robot):
             break
         elif moving and current_time - first_time > time_to_stay:
             first_time = current_time
-            time_to_stay = random.poisson(lam=15)
+            time_to_stay = random.poisson(lam=LAMBDA)
             print('moving to new location')
             translation_new  = [(random.random()-0.5)*10.0, (random.random()-0.5)*10.0, 1 + random.random()*3.0]
             go_to_goal(translation_new[0], translation_new[1], translation_new[2], adverserial)

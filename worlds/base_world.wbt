@@ -9,7 +9,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation 0.19939588667473918 0.20139988221919936 -0.9589991490190632 1.6026558604880672
-  position -0.06147011215135499 8.927271896907497 3.757606435154743
+  position -0.1952424915953153 22.30406393040165 9.571868381029214
   follow "Drone"
 }
 TexturedBackground {
@@ -18,7 +18,7 @@ TexturedBackgroundLight {
 }
 RectangleArena {
   name "outside"
-  floorSize 20 20
+  floorSize 30 30
   floorAppearance PBRAppearance {
     baseColor 0 0 0
     roughness 1
@@ -36,13 +36,13 @@ RectangleArena {
   }
 }
 Wall {
-  translation 0 -10 0
+  translation 0 -15 0
   rotation 0 0 1 1.5708
   name "wall(3)"
-  size 0.2 20 2.4
+  size 0.2 30 2.4
 }
 Robot {
-  translation -7.83 -7.63 0.49
+  translation -13.59 -12.03 0.49
   children [
     Emitter {
       translation 0.2 0.5 0.7
@@ -2066,11 +2066,11 @@ DEF EnemyDrone4 Robot {
   supervisor TRUE
 }
 Wall {
-  translation -10 0 0
-  size 0.2 20 2.4
+  translation -15 0 0
+  size 0.2 30 2.4
 }
 Wall {
-  translation 10 0 0
+  translation 15 0 0
   name "wall(1)"
-  size 0.2 20 2.4
+  size 0.2 30 2.4
 }

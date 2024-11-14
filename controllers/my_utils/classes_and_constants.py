@@ -13,12 +13,13 @@ DRONE_CHANNEL = 1
 ENEMY_DRONE_CHANNEL = 2
 
 EPSILON = 0.5
+LAMBDA = 30
 
 
 # For Experiments
 SEED = 4 # 1-5 for each experiment
 # enemy drone
-ADVERSARIAL = False
+ADVERSARIAL = True
 INPLACE = False
 MOVING = False
 OBSTACLES = False
