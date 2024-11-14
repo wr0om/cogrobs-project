@@ -66,19 +66,17 @@ def replan_path(drones_positions, emitter, use_random=False, use_radius=False, a
         send_msg_to_drone(emitter, message)
         return plan_coords
 
-
     if use_radius and all_drone_radii:
         radii_list = [radius for drone, radius in all_drone_radii.items() if drone != "Drone"]
     else:
         radii_list = [0 for drone in drones_positions.keys() if drone != "Drone"]
 
-  
     if use_random:
         enemy_drone_positions = position_list[1:]
         # np random permutation of enemy drone positions
         plan_coords = np.random.permutation(enemy_drone_positions)
         # convert to regular list
-        plan_coords = [tuple(coords) for coords in plan_coords]
+        plan_coords = [tuple([float(coord) for coord in coords]) for coords in plan_coords]
         message = ("CPU", plan_coords)
         send_msg_to_drone(emitter, message)
         return plan_coords
