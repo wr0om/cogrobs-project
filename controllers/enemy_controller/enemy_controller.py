@@ -202,7 +202,7 @@ def run_robot(robot):
                 if any(found_new) and not stops:
                     print('obstacle detected stopping')
                     x_goal, y_goal = x_global, y_global
-                    if any([p< 300.0 for p in obstacle_values0]):
+                    if any([p < 300.0 for p in obstacle_values0]):
                         x_goal, y_goal = [x_global, y_global] - 0.3 * moving_direction_vector
                     stops = True
                 elif reached_goal and stops:
@@ -287,27 +287,28 @@ def run_robot(robot):
             if np.linalg.norm(initial_state["pos"] - desired_state["pos"]) > 0.1:
                 #print("moving")
                 env =  1.0 if not OBSTACLES  else ((min(obstacle_values0) + 100) / 1100.0)
+                change = 0.75 if np.abs(altitude_goal - altitude) > 0.1 else 1.0
                 if not slowing_forward:
                     if forward_distance > SPEEDING_UNIT and forward_desired < env * MAX_FORWARD_SPEED:
-                        forward_desired += SPEEDING_UNIT
+                         forward_desired = np.clip(forward_desired + change*SPEEDING_UNIT,-env * MAX_FORWARD_SPEED, env * MAX_FORWARD_SPEED)
                     elif forward_distance < -SPEEDING_UNIT and forward_desired > -env * MAX_FORWARD_SPEED:
-                        forward_desired -= SPEEDING_UNIT
+                        forward_desired = np.clip(forward_desired - change*SPEEDING_UNIT,-env * MAX_FORWARD_SPEED, env * MAX_FORWARD_SPEED)
+                        
+                if altitude_goal - altitude > 0.1:
+                    height_diff_desired = 0.1
 
+                if altitude_goal - altitude < -0.1 :
+                    height_diff_desired = -0.1
                 if not slowing_sideways:
                     if sideways_distance > SPEEDING_UNIT and sideways_desired < env * MAX_SIDEWAY_SPEED:
-                        sideways_desired += SPEEDING_UNIT
+                        sideways_desired = np.clip(sideways_desired + change * SPEEDING_UNIT,-env * MAX_SIDEWAY_SPEED, env * MAX_SIDEWAY_SPEED)
                     elif sideways_distance < -SPEEDING_UNIT and sideways_desired > -env * MAX_SIDEWAY_SPEED:
-                        sideways_desired -= SPEEDING_UNIT
+                        sideways_desired = np.clip(sideways_desired - change * SPEEDING_UNIT,-env * MAX_SIDEWAY_SPEED, env * MAX_SIDEWAY_SPEED)
 
                 if yaw_desired - yaw > 0.1:
                     yaw_desired += 1
                 elif yaw_desired - yaw < -0.1:
                     yaw_desired -= 1
-
-                if altitude_goal - altitude > 0.1:
-                    height_diff_desired = 0.1
-                elif altitude_goal - altitude < -0.1 :
-                    height_diff_desired = -0.1
 
                 forward_desired = np.sign(forward_desired)*min(env * MAX_FORWARD_SPEED, np.abs(forward_desired))
                 sideways_desired = np.sign(sideways_desired)*min(env * MAX_SIDEWAY_SPEED, np.abs(sideways_desired))
@@ -360,6 +361,8 @@ def run_robot(robot):
 
             ## PID velocity controller with fixed height
             nonlocal PID_CF
+            # if robot_name[-1] == "3":
+            #     print(f"forward_desired: {forward_desired}, sideways_desired: {sideways_desired}, yaw_desired: {yaw_desired}, height_desired: {height_desired}")
             motor_power = PID_CF.pid(dt, forward_desired, sideways_desired,
                                     yaw_desired, height_desired,
                                     roll, pitch, yaw_rate,
@@ -432,7 +435,7 @@ def run_robot(robot):
             find_location_flag = True
 
 
-    radius = 1 + random.random()*1.0
+    radius = 1 + random.random()*4.0
     r = random.random()
     thetha = random.random()*2.0*np.pi
     altitude_goal = -1
@@ -489,7 +492,9 @@ def run_robot(robot):
             find_location_flag = False
             while not find_location_flag:
                 translation_new  = [(random.random()-0.5)*10.0, (random.random()-0.5)*10.0, 1 + random.random()*3.0]
-                if all([np.linalg.norm(np.array(translation_new[:2]) - np.array([obstacle[0], obstacle[1]]) )\
+                if not OBSTACLES and np.min(np.abs(np.array(translation_new) - np.array(current_location))) > 0.3:
+                    find_location_flag = True
+                elif all([np.linalg.norm(np.array(translation_new[:2]) - np.array([obstacle[0], obstacle[1]]) )\
                         > radius + 0.5 for obstacle, radius in zip(obstacle_locations, obstacle_radii)]):
                     find_location_flag = True
             go_to_goal(translation_new[0], translation_new[1], translation_new[2], adverserial)
@@ -508,12 +513,14 @@ def run_robot(robot):
                     prev_thetha = thetha
                     thetha = prev_thetha + np.pi/2.0 + random.random()*np.pi
                     del_x, del_y, del_z = r*np.cos(alpha)*np.sin(thetha), r*np.sin(alpha)*np.sin(thetha), r*np.cos(thetha)
-                    translation_new = [x_goal + del_x, y_goal + del_y, altitude_goal + del_z]
-                    if all([np.linalg.norm(np.array(translation_new[:2]) - np.array([obstacle[0], obstacle[1]]) )\
+                    translation_new = [float(x_goal+ del_x),  float(y_goal + del_y),  float(np.clip(altitude_goal + del_z, 1, 8))]
+                    if not OBSTACLES and np.min(np.abs(np.array(translation_new) - np.array(current_location))) > 0.3:
+                        find_location_flag = True
+                    elif all([np.linalg.norm(np.array(translation_new[:2]) - np.array([obstacle[0], obstacle[1]]) )\
                             > radius + 0.5 for obstacle, radius in zip(obstacle_locations, obstacle_radii)]) and np.linalg.norm(np.array(translation_new[:2]) - np.array([x_global,y_global])) > 0.2:
                         find_location_flag = True
-                x_goal, y_goal, altitude_goal = translation_new[0] + del_x,  translation_new[1] + del_y,  np.clip(translation_new[2] + del_z, 1, 8)
-                # print(f"{robot_name} received goal location: {x_goal}, {y_goal}, {altitude_goal}")
+                x_goal, y_goal, altitude_goal =  translation_new
+                print(f"{robot_name} received goal location: {x_goal}, {y_goal}, {altitude_goal}")
                 go_to_goal(x_goal, y_goal, altitude_goal, adverserial)
 
 
