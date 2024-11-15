@@ -196,9 +196,7 @@ def run_robot(robot):
                 if distance > all_drone_radii[drone]:
                     all_drone_radii[drone] = distance
 
-        if use_centroids:
-            drones_positions = {drone: all_drone_centroids[drone]["centroid"] for drone in all_drone_centroids.keys()}
-            drones_positions["Drone"] = drone_pos
+
 
 
         # for metrics
@@ -238,6 +236,9 @@ def run_robot(robot):
         # replan only after removing a drone or 6 seconds have passed
         if current_time - last_replanner > 6 or \
               len(last_drone_positions) != len(drones_positions):
+            if use_centroids:
+                drones_positions = {drone: all_drone_centroids[drone]["centroid"] for drone in all_drone_centroids.keys()}
+                drones_positions["Drone"] = drone_pos
             plan_coords = replan_path(drones_positions, emitter,\
                                        use_random, use_radius, all_drone_radii)
             last_replanner = current_time
