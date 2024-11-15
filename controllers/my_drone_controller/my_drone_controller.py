@@ -129,8 +129,8 @@ def run_robot(robot):
             y_goal = y
             altitude_goal = z
         else: # to not crash into enemy drones, only get close to them
-            x_goal = x - EPSILON / 5
-            y_goal = y - EPSILON / 5
+            x_goal = x - EPSILON / 3
+            y_goal = y - EPSILON / 3
             altitude_goal = z
 
         execute_configuration(x_goal, y_goal, altitude_goal, flag_lifting_off)

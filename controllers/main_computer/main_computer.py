@@ -22,12 +22,16 @@ path_to_save = "../experiments/"
 if not os.path.exists(path_to_save):
     os.makedirs(path_to_save)
 
-all_results = path_to_save + "all_results.csv"
-if not os.path.exists(all_results):
-    with open(all_results, "w") as f:
-        f.write("SEED,PLANNING_EXPERIMENT,INPLACE,MOVING,ADVERSARIAL,OBSTACLES,Time,Distance\n")
-
-
+if NUMBER_OF_ENEMY_DRONES_STUDY:
+    all_results = path_to_save + "all_results_study.csv"
+    if not os.path.exists(all_results):
+        with open(all_results, "w") as f:
+            f.write("NUMBER_OF_DRONES,SEED,PLANNING_EXPERIMENT,INPLACE,MOVING,ADVERSARIAL,OBSTACLES,Time,Distance\n")
+else:
+    all_results = path_to_save + "all_results.csv"
+    if not os.path.exists(all_results):
+        with open(all_results, "w") as f:
+            f.write("SEED,PLANNING_EXPERIMENT,INPLACE,MOVING,ADVERSARIAL,OBSTACLES,Time,Distance\n")
 
 if INPLACE:
     path_to_save += f"inplace-"
@@ -139,6 +143,12 @@ def run_robot(robot):
     for name in robot_names:
         print(name)
 
+    num_enemy_drones = len(robot_names) - 1
+    if NUMBER_OF_ENEMY_DRONES_STUDY:
+        global file_path
+        split_path = file_path.split("/")
+        file_path = f"../experiments/{num_enemy_drones}_drones_{split_path[-1]}"
+
 
     # get robot objects
     drone_robots = [supervisor.getFromDef(name) for name in robot_names]
@@ -197,8 +207,6 @@ def run_robot(robot):
                     all_drone_radii[drone] = distance
 
 
-
-
         # for metrics
         total_drone_distance += np.linalg.norm(np.array(drones_positions["Drone"]) - np.array(last_drone_location))
         last_drone_location = drones_positions["Drone"]
@@ -226,10 +234,13 @@ def run_robot(robot):
                     print(f"Total Time: {total_drone_time}")
                     print(f"Total Distance Traveled: {total_drone_distance}")
                     print("Plotting drone movement...")
+                    with open(all_results, "a") as f:
+                        if NUMBER_OF_ENEMY_DRONES_STUDY:
+                            f.write(f"{num_enemy_drones},{SEED},{PLANNING_EXPERIMENT},{INPLACE},{MOVING},{ADVERSARIAL},{OBSTACLES},{total_drone_time},{total_drone_distance}\n")
+                        else:
+                            f.write(f"{SEED},{PLANNING_EXPERIMENT},{INPLACE},{MOVING},{ADVERSARIAL},{OBSTACLES},{total_drone_time},{total_drone_distance}\n")
                     plot_drone_movement(all_drone_locations, destroyed_drone_locations,\
                                          total_drone_time, total_drone_distance, file_path)
-                    with open(all_results, "a") as f:
-                        f.write(f"{SEED},{PLANNING_EXPERIMENT},{INPLACE},{MOVING},{ADVERSARIAL},{OBSTACLES},{total_drone_time},{total_drone_distance}\n")
                     robot.step(-1)
                     break
 
