@@ -107,8 +107,8 @@ Robot {
   supervisor TRUE
 }
 DEF Drone Robot {
-  translation 0.316184 0.375969 0.01
-  rotation -0.8582478077538083 0.4228945589766914 0.2908107502718766 0.017797663008197205
+  translation 0.3160817420424811 0.37573415844463254 1.7150545450714576
+  rotation -5.691293842509494e-14 -7.0164237857695e-14 1 0.005936366217455399
   children [
     DEF ds0 DistanceSensor {
       name "ds0"
@@ -504,7 +504,7 @@ DEF Drone Robot {
       }
       fastHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 -1 0.5964015664099207
+        rotation 0 0 1 0.7524030335437124
         children [
           DEF FASTHELIX Shape {
             appearance PBRAppearance {
@@ -525,7 +525,7 @@ DEF Drone Robot {
       }
       slowHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 -1 1.5760285322109948
+        rotation 0 0 -1 2.2586760073956427
         children [
           DEF PROP_SHAPE Shape {
             appearance DEF PLASTIC PBRAppearance {
@@ -554,14 +554,14 @@ DEF Drone Robot {
       }
       fastHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 -1 1.8397737687256388
+        rotation 0 0 0.9999999999999999 2.941517637890459
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 0.9999999999999999 4.986269838983107
+        rotation 0 0 1 5.827827740070674
         children [
           USE PROP_SHAPE
         ]
@@ -580,14 +580,14 @@ DEF Drone Robot {
       }
       fastHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 1 1.4566160283846612
+        rotation 0 0 1 5.14765166942203
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 1 2.2222829272921616
+        rotation 0 0 1 0.5906043040711867
         children [
           USE PROP_SHAPE
         ]
@@ -606,14 +606,14 @@ DEF Drone Robot {
       }
       fastHelix Solid {
         translation 0.031 0.031 0.008
-        rotation 0 0 1 1.0402343151678337
+        rotation 0 0 -1 2.650798812603708
         children [
           USE FASTHELIX
         ]
       }
       slowHelix DEF PROP Solid {
         translation 0.031 0.031 0.007
-        rotation 0 0 1 0.6238047201468815
+        rotation 0 0 1 2.255485375918439
         children [
           USE PROP_SHAPE
         ]
@@ -632,10 +632,12 @@ DEF Drone Robot {
   }
   controller "my_drone_controller"
   supervisor TRUE
+  linearVelocity 6.639668579947245e-17 -5.560412057034793e-16 0.10015184775209644
+  angularVelocity -9.590575063626175e-15 1.294889337058883e-15 -5.824377363099484e-19
 }
 DEF EnemyDrone1 Robot {
-  translation -0.8304569816923814 2.2029872832026474 -0.0250196136
-  rotation -1.4099474041800523e-14 -6.033425490044704e-15 -0.9999999999999999 0.0063453527942021245
+  translation -0.6400522045692315 -4.740698499843106 1.7050394440651773
+  rotation 1.646208769533882e-12 4.825497103858066e-13 -1 0.006345812403096487
   children [
     DEF ds0 DistanceSensor {
       name "ds0"
@@ -1031,7 +1033,7 @@ DEF EnemyDrone1 Robot {
       }
       fastHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 1 5.939685565477678
+        rotation 0 0 -1 3.441124389334306
         children [
           DEF FASTHELIX Shape {
             appearance PBRAppearance {
@@ -1052,7 +1054,7 @@ DEF EnemyDrone1 Robot {
       }
       slowHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 -1 6.144424560267997
+        rotation 0 0 1 3.8998838131863227
         children [
           DEF PROP_SHAPE Shape {
             appearance DEF PLASTIC PBRAppearance {
@@ -1081,14 +1083,14 @@ DEF EnemyDrone1 Robot {
       }
       fastHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 1 3.9955530217021615
+        rotation 0 0 0.9999999999999999 0.6255300232188719
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 1 1.8608558221655271
+        rotation 0 0 1 4.198455724075731
         children [
           USE PROP_SHAPE
         ]
@@ -1107,14 +1109,14 @@ DEF EnemyDrone1 Robot {
       }
       fastHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 1 4.700016110554844
+        rotation 0 0 1 3.292708500931623
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 -0.9999999999999999 5.5037334712974
+        rotation 0 0 -1 3.3435673142908082
         children [
           USE PROP_SHAPE
         ]
@@ -1133,14 +1135,14 @@ DEF EnemyDrone1 Robot {
       }
       fastHelix Solid {
         translation 0.031 0.031 0.008
-        rotation 0 0 -1 2.0073503916447524
+        rotation 0 0 -1 0.42664188979664086
         children [
           USE FASTHELIX
         ]
       }
       slowHelix DEF PROP Solid {
         translation 0.031 0.031 0.007
-        rotation 0 0 -1 2.63905031432743
+        rotation 0 0 -1 4.625815579071615
         children [
           USE PROP_SHAPE
         ]
@@ -1159,10 +1161,12 @@ DEF EnemyDrone1 Robot {
   }
   controller "enemy_controller"
   supervisor TRUE
+  linearVelocity -1.211963994388999e-15 2.180846677653379e-14 0.10016014460674966
+  angularVelocity 9.885060244519772e-13 2.7456392832733035e-14 8.882244366246678e-16
 }
 DEF EnemyDrone2 Robot {
-  translation -0.6400509970362549 -4.740741861002967 -0.025019613600000008
-  rotation 1.713389951062303e-14 -1.1963474678161113e-14 -1 0.004416111043524241
+  translation 4.670273939133679 0.47229410372698444 1.7050394245075826
+  rotation -6.068652504760558e-14 -1.706546914593033e-12 -1 0.004425631942290949
   children [
     DEF ds0 DistanceSensor {
       name "ds0"
@@ -1558,7 +1562,7 @@ DEF EnemyDrone2 Robot {
       }
       fastHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 1 1.835245072068435
+        rotation 0 0 1 5.7172357971283105
         children [
           DEF FASTHELIX Shape {
             appearance PBRAppearance {
@@ -1579,7 +1583,7 @@ DEF EnemyDrone2 Robot {
       }
       slowHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 -1 0.40832842062066094
+        rotation 0 0 -0.9999999999999999 2.233961287699351
         children [
           DEF PROP_SHAPE Shape {
             appearance DEF PLASTIC PBRAppearance {
@@ -1608,14 +1612,14 @@ DEF EnemyDrone2 Robot {
       }
       fastHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 -1 4.460179028690948
+        rotation 0 0 -1 3.5183415740800537
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 1 4.094730896766002
+        rotation 0 0 1 1.4690952555304628
         children [
           USE PROP_SHAPE
         ]
@@ -1634,14 +1638,14 @@ DEF EnemyDrone2 Robot {
       }
       fastHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 -0.9999999999999999 5.367503538864154
+        rotation 0 0 1 5.134862780381537
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 -1 0.7523209374692587
+        rotation 0 0 1 0.7511478625350742
         children [
           USE PROP_SHAPE
         ]
@@ -1660,14 +1664,14 @@ DEF EnemyDrone2 Robot {
       }
       fastHelix Solid {
         translation 0.031 0.031 0.008
-        rotation 0 0 -1 4.511453543462824
+        rotation 0 0 0.9999999999999999 5.314660027158895
         children [
           USE FASTHELIX
         ]
       }
       slowHelix DEF PROP Solid {
         translation 0.031 0.031 0.007
-        rotation 0 0 -1 5.476797907512126
+        rotation 0 0 -1 2.5094313579743743
         children [
           USE PROP_SHAPE
         ]
@@ -1686,10 +1690,12 @@ DEF EnemyDrone2 Robot {
   }
   controller "enemy_controller"
   supervisor TRUE
+  linearVelocity -7.219690875839187e-15 -5.399145211911716e-15 0.1001601446196485
+  angularVelocity 4.198686904286521e-14 -8.128396964752492e-13 8.873197269967995e-16
 }
 DEF EnemyDrone3 Robot {
-  translation 0.5079790443259329 2.081482405462379 -0.025019613600000008
-  rotation -1.2515720768286643e-14 1.9075097738019282e-14 -1 0.0044457537021732095
+  translation 3.9285657798638516 -1.6801586369755026 1.7050395745332332
+  rotation 3.5151233528770184e-13 2.866691072396961e-12 -1 0.004474900482513127
   children [
     DEF ds0 DistanceSensor {
       name "ds0"
@@ -2085,7 +2091,7 @@ DEF EnemyDrone3 Robot {
       }
       fastHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 1 5.1547913000098085
+        rotation 0 0 -1 4.671450729286363
         children [
           DEF FASTHELIX Shape {
             appearance PBRAppearance {
@@ -2106,7 +2112,7 @@ DEF EnemyDrone3 Robot {
       }
       slowHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 -1 5.144752757812482
+        rotation 0 0 1 4.454128156896695
         children [
           DEF PROP_SHAPE Shape {
             appearance DEF PLASTIC PBRAppearance {
@@ -2135,14 +2141,14 @@ DEF EnemyDrone3 Robot {
       }
       fastHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 0.9999999999999999 4.78664534013836
+        rotation 0 0 -1 5.715742160866953
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 1 6.023064926254316
+        rotation 0 0 1 4.51956980127304
         children [
           USE PROP_SHAPE
         ]
@@ -2161,14 +2167,14 @@ DEF EnemyDrone3 Robot {
       }
       fastHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 0.9999999999999999 3.8793412088713977
+        rotation 0 0 1 2.937375632607042
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 1 5.758921483279064
+        rotation 0 0 -1 4.181936467902132
         children [
           USE PROP_SHAPE
         ]
@@ -2187,14 +2193,14 @@ DEF EnemyDrone3 Robot {
       }
       fastHelix Solid {
         translation 0.031 0.031 0.008
-        rotation 0 0 -1 1.1919276939705585
+        rotation 0 0 -1 5.074136003389668
         children [
           USE FASTHELIX
         ]
       }
       slowHelix DEF PROP Solid {
         translation 0.031 0.031 0.007
-        rotation 0 0 1 4.865406885996652
+        rotation 0 0 -0.9999999999999999 5.8755537547983785
         children [
           USE PROP_SHAPE
         ]
@@ -2213,10 +2219,12 @@ DEF EnemyDrone3 Robot {
   }
   controller "enemy_controller"
   supervisor TRUE
+  linearVelocity -5.5290678179975644e-14 -2.2266831215487787e-14 0.1001601445207966
+  angularVelocity -6.5540582926905325e-15 -1.464549525877025e-13 2.6645947040310462e-15
 }
 DEF EnemyDrone4 Robot {
-  translation 4.670302569417837 0.4723224731188374 -0.02501961360000001
-  rotation -1.1209293943605533e-14 -1.441691973249669e-14 -1 0.004459681526928612
+  translation 3.734309353468916 4.685342714535586 1.7050396856163044
+  rotation 9.85616704364601e-13 6.352106207939896e-13 -1 0.004469480729756796
   children [
     DEF ds0 DistanceSensor {
       name "ds0"
@@ -2612,7 +2620,7 @@ DEF EnemyDrone4 Robot {
       }
       fastHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 1 1.8352554393955844
+        rotation 0 0 1 0.8932865579995161
         children [
           DEF FASTHELIX Shape {
             appearance PBRAppearance {
@@ -2633,7 +2641,7 @@ DEF EnemyDrone4 Robot {
       }
       slowHelix Solid {
         translation 0.031 -0.031 0.008
-        rotation 0 0 1 5.36970265572804
+        rotation 0 0 -1 4.5711547918299
         children [
           DEF PROP_SHAPE Shape {
             appearance DEF PLASTIC PBRAppearance {
@@ -2662,14 +2670,14 @@ DEF EnemyDrone4 Robot {
       }
       fastHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 1 4.786645354312153
+        rotation 0 0 -1 5.71581652126018
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 -0.031 0.008
-        rotation 0 0 -1 4.9171205800172935
+        rotation 0 0 1 6.145676725333303
         children [
           USE PROP_SHAPE
         ]
@@ -2688,14 +2696,14 @@ DEF EnemyDrone4 Robot {
       }
       fastHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 -1 5.367493570184449
+        rotation 0 0 -1 2.6273685169583576
         children [
           USE FASTHELIX
         ]
       }
       slowHelix Solid {
         translation -0.031 0.031 0.008
-        rotation 0 0 1 1.4196442238054587
+        rotation 0 0 -1 1.547845076118774
         children [
           USE PROP_SHAPE
         ]
@@ -2714,14 +2722,14 @@ DEF EnemyDrone4 Robot {
       }
       fastHelix Solid {
         translation 0.031 0.031 0.008
-        rotation 0 0 -1 1.1919276792336748
+        rotation 0 0 -1 5.074054394670071
         children [
           USE FASTHELIX
         ]
       }
       slowHelix DEF PROP Solid {
         translation 0.031 0.031 0.007
-        rotation 0 0 -0.9999999999999999 2.370438067136248
+        rotation 0 0 -1 0.5449504300495299
         children [
           USE PROP_SHAPE
         ]
@@ -2740,6 +2748,8 @@ DEF EnemyDrone4 Robot {
   }
   controller "enemy_controller"
   supervisor TRUE
+  linearVelocity 4.47495304140222e-15 3.1265326329994017e-15 0.100160144447589
+  angularVelocity 1.2540931736656302e-13 1.9018855674082933e-14 4.452244033513615e-16
 }
 Wall {
   translation -15 0 0
@@ -2780,9 +2790,9 @@ DEF oil_barrel5 OilBarrel {
   height 5
   radius 0.75
 }
-DEF oil_barrel5 OilBarrel {
+DEF oil_barrel6 OilBarrel {
   translation 5.8 -1.28 2.5
-  name "oil_barrel5(1)"
+  name "oil_barrel6"
   height 5
   radius 0.75
 }

@@ -360,10 +360,10 @@ def run_robot(robot):
                 return
             
     def lose_control(supervisor):
-        robot_node = supervisor.getFromDef(robot_name)
-        #set the new translation
-        translation_field = robot_node.getField("translation")
-        translation_field.setSFVec3f([200,200,0])
+        # robot_node = supervisor.getFromDef(robot_name)
+        # #set the new translation
+        # translation_field = robot_node.getField("translation")
+        # translation_field.setSFVec3f([200,200,0])
         m1_motor.setVelocity(0)
         m2_motor.setVelocity(0)
         m3_motor.setVelocity(0)
