@@ -178,11 +178,12 @@ def run_robot(robot):
             if distance_from_drone < EPSILON:
                 print(f"Drone is about to crash into {robot_name}")
                 # enemy drone loses control
-                lose_control()
+                lose_control(supervisor=supervisor)
                 break
 
             #obstacle avoidance
-            if OBSTACLES:
+            final_eq_goal = x_goal == x_save_goal and y_goal == y_save_goal
+            if OBSTACLES:          #obstacle avoidance
                 moving_direction_vector = np.array([x_goal, y_goal]) - np.array([x_global, y_global])
                 goal_direction_vector = np.array([x_save_goal, y_save_goal]) - np.array([x_global, y_global])
                 moving_angle = np.arctan2(moving_direction_vector[1], moving_direction_vector[0])
@@ -202,8 +203,8 @@ def run_robot(robot):
                 if any(found_new) and not stops:
                     print('obstacle detected stopping')
                     x_goal, y_goal = x_global, y_global
-                    if any([p < 300.0 for p in obstacle_values0]):
-                        x_goal, y_goal = [x_global, y_global] - 0.3 * moving_direction_vector
+                    # if any([p< 300.0 for p in obstacle_values0]):
+                    #     x_goal, y_goal = [x_global, y_global] - 0.3 * moving_direction_vector
                     stops = True
                 elif reached_goal and stops:
                     print('moving left')
@@ -237,7 +238,7 @@ def run_robot(robot):
                 prev_obstacle_values0 = obstacle_values0
                 prev_obstacle_values1 = obstacle_values1
                           
-            if adverserial:
+            if adverserial and (not OBSTACLES or not stops):
                 if distance_from_drone < 2.5 * EPSILON:
                     #print(f"running away")
                     vec = vec / distance_from_drone
@@ -270,29 +271,21 @@ def run_robot(robot):
             forward_distance = desired_state["pos"][0] - initial_state["pos"][0]
             sideways_distance = desired_state["pos"][1] - initial_state["pos"][1]
 
-            # print("forward_distance: ", forward_distance , "sideways_distance: ", sideways_distance)
-            
-
-            # print(f"Current position: {initial_state['pos']}")
-            # print(f"Desired position: {desired_state['pos']}")
-            # # print(f"Current velocity: {initial_state['moment']}")
-            # # print(f"Desired velocity: {desired_state['moment']}")
-            # # print("\n")
-            # # print(f"deseired_direction: {desired_direction}")
-            # print(f"distance: {distance}")
-
             slowing_forward = False
             slowing_sideways = False
 
             if np.linalg.norm(initial_state["pos"] - desired_state["pos"]) > 0.1:
                 #print("moving")
                 env =  1.0 if not OBSTACLES  else ((min(obstacle_values0) + 100) / 1100.0)
-                change = 0.75 if np.abs(altitude_goal - altitude) > 0.1 else 1.0
+                change = 0.65 if np.abs(altitude_goal - altitude) > 0.1 else 1.0
+                if stops:
+                    env = 1.0
+                    change = 1.0
                 if not slowing_forward:
-                    if forward_distance > SPEEDING_UNIT and forward_desired < env * MAX_FORWARD_SPEED:
-                         forward_desired = np.clip(forward_desired + change*SPEEDING_UNIT,-env * MAX_FORWARD_SPEED, env * MAX_FORWARD_SPEED)
-                    elif forward_distance < -SPEEDING_UNIT and forward_desired > -env * MAX_FORWARD_SPEED:
-                        forward_desired = np.clip(forward_desired - change*SPEEDING_UNIT,-env * MAX_FORWARD_SPEED, env * MAX_FORWARD_SPEED)
+                    if forward_distance > change * env * SPEEDING_UNIT and forward_desired < env * MAX_FORWARD_SPEED:
+                         forward_desired = np.clip(forward_desired + change * env *SPEEDING_UNIT,-env * MAX_FORWARD_SPEED, env * MAX_FORWARD_SPEED)
+                    elif forward_distance < -change *SPEEDING_UNIT and forward_desired > -env  * MAX_FORWARD_SPEED:
+                        forward_desired = np.clip(forward_desired - change * env *SPEEDING_UNIT,-env * MAX_FORWARD_SPEED, env * MAX_FORWARD_SPEED)
                         
                 if altitude_goal - altitude > 0.1:
                     height_diff_desired = 0.1
@@ -300,10 +293,10 @@ def run_robot(robot):
                 if altitude_goal - altitude < -0.1 :
                     height_diff_desired = -0.1
                 if not slowing_sideways:
-                    if sideways_distance > SPEEDING_UNIT and sideways_desired < env * MAX_SIDEWAY_SPEED:
-                        sideways_desired = np.clip(sideways_desired + change * SPEEDING_UNIT,-env * MAX_SIDEWAY_SPEED, env * MAX_SIDEWAY_SPEED)
-                    elif sideways_distance < -SPEEDING_UNIT and sideways_desired > -env * MAX_SIDEWAY_SPEED:
-                        sideways_desired = np.clip(sideways_desired - change * SPEEDING_UNIT,-env * MAX_SIDEWAY_SPEED, env * MAX_SIDEWAY_SPEED)
+                    if sideways_distance > change *SPEEDING_UNIT and sideways_desired < env * MAX_SIDEWAY_SPEED:
+                        sideways_desired = np.clip(sideways_desired + change  * env * SPEEDING_UNIT,-env * MAX_SIDEWAY_SPEED, env * MAX_SIDEWAY_SPEED)
+                    elif sideways_distance < -change *SPEEDING_UNIT and sideways_desired > -env * MAX_SIDEWAY_SPEED:
+                        sideways_desired = np.clip(sideways_desired - change  * env * SPEEDING_UNIT,-env * MAX_SIDEWAY_SPEED, env * MAX_SIDEWAY_SPEED)
 
                 if yaw_desired - yaw > 0.1:
                     yaw_desired += 1
@@ -320,7 +313,7 @@ def run_robot(robot):
                 
                 if np.linalg.norm(initial_state["pos"][1] - desired_state["pos"][1]) < 0.3 and np.abs(sideways_desired) > 10*SPEEDING_UNIT:
                     slowing_sideways = True
-                    sideways_desired -= np.sign(sideways_desired)*SPEEDING_UNIT
+                    sideways_desired -= np.sign(sideways_desired)*change * env *SPEEDING_UNIT
         
             else:
                 #print("slowing down")
@@ -333,20 +326,6 @@ def run_robot(robot):
                     sideways_desired -= np.sign(sideways_desired)*SPEEDING_UNIT
                 else:
                     sideways_desired = 0
-
-                # if yaw_desired - yaw > 0.1:
-                #     yaw_desired += 0.1
-                # elif yaw_desired - yaw < -0.1:
-                #     yaw_desired -= 0.1
-                # else:
-                #     yaw_desired = 0
-                
-                # if altitude_goal - altitude > 0.1:
-                #     height_diff_desired = 0.1
-                # elif altitude_goal - altitude < -0.1:
-                #     height_diff_desired = -0.1
-                # else:
-                #     height_diff_desired = 0
 
                 if forward_desired == sideways_desired == 0:
                     reached_goal = True
@@ -380,7 +359,11 @@ def run_robot(robot):
             if reached_goal and np.linalg.norm(initial_state["pos"] - final_state["pos"]) < 0.1:
                 return
             
-    def lose_control():
+    def lose_control(supervisor):
+        robot_node = supervisor.getFromDef(robot_name)
+        #set the new translation
+        translation_field = robot_node.getField("translation")
+        translation_field.setSFVec3f([200,200,0])
         m1_motor.setVelocity(0)
         m2_motor.setVelocity(0)
         m3_motor.setVelocity(0)
@@ -483,7 +466,7 @@ def run_robot(robot):
         if distance_from_drone < EPSILON:
             print(f"Drone is about to crash into {robot_name}")
             # enemy drone loses control
-            lose_control()
+            lose_control(supervisor=supervisor)
             break
         elif moving and current_time - first_time > time_to_stay:
             first_time = current_time
@@ -501,6 +484,7 @@ def run_robot(robot):
         elif inplace:
             stay_in_position(robot_name, adverserial)
         else:
+            stay_in_position(robot_name, adverserial)
             distance = np.linalg.norm(np.array([x_goal, y_goal, altitude_goal]) - np.array(current_location))
             if distance < 0.1:
                 find_location_flag = False
@@ -514,13 +498,12 @@ def run_robot(robot):
                     thetha = prev_thetha + np.pi/2.0 + random.random()*np.pi
                     del_x, del_y, del_z = r*np.cos(alpha)*np.sin(thetha), r*np.sin(alpha)*np.sin(thetha), r*np.cos(thetha)
                     translation_new = [float(x_goal+ del_x),  float(y_goal + del_y),  float(np.clip(altitude_goal + del_z, 1, 8))]
-                    if not OBSTACLES and np.min(np.abs(np.array(translation_new) - np.array(current_location))) > 0.3:
+                    if not OBSTACLES and np.min(np.abs(np.array(translation_new) - np.array(current_location))) > 0.5:
                         find_location_flag = True
                     elif all([np.linalg.norm(np.array(translation_new[:2]) - np.array([obstacle[0], obstacle[1]]) )\
-                            > radius + 0.5 for obstacle, radius in zip(obstacle_locations, obstacle_radii)]) and np.linalg.norm(np.array(translation_new[:2]) - np.array([x_global,y_global])) > 0.2:
+                            > radius + 0.5 for obstacle, radius in zip(obstacle_locations, obstacle_radii)]) and np.linalg.norm(np.array(translation_new[:2]) - np.array([x_global,y_global])) > 0.3:
                         find_location_flag = True
                 x_goal, y_goal, altitude_goal =  translation_new
-                print(f"{robot_name} received goal location: {x_goal}, {y_goal}, {altitude_goal}")
                 go_to_goal(x_goal, y_goal, altitude_goal, adverserial)
 
 
