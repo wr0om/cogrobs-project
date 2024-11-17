@@ -5,7 +5,7 @@ SEED = 2 # 1-3 for each experiment
 INPLACE = False
 MOVING = True
 ADVERSARIAL = True
-OBSTACLES = True
+OBSTACLES = False
 
 # planning
 PLANNING_EXPERIMENT = 2 # 1-4 for each experiment (without 3!!!)
